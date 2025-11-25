@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environment
+venv/
+env/
+.venv/
+
+# Flask instance folder (where config, uploads, and dev DB usually sit)
+instance/
+
+# Environment variables
+.env
+*.env
+
+# SQLite database (if you're using one locally)
+*.db
+
+# IDE / Editor files
+.vscode/
+.idea/
+
+# macOS
+.DS_Store
+
+# Upload folders
+uploads/
+static/uploads/
