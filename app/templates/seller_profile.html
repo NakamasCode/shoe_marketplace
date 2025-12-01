@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Seller Profile</h2>
+
+<form method="POST" enctype="multipart/form-data">
+    {{ form.hidden_tag() }}
+
+    <!-- Shop Logo -->
+    <label>{{ form.shop_logo.label }}</label><br>
+    {{ form.shop_logo }}<br><br>
+
+    {% if profile.shop_logo %}
+        <p>Current Logo:</p>
+        <img src="{{ url_for('static', filename='uploads/' ~ profile.shop_logo) }}" width="120"><br>
+        <a href="{{ url_for('delete_logo', seller_id=profile.id) }}" class="btn btn-danger">Delete Logo</a><br><br>
+    {% endif %}
+
+    <!-- Shop Details -->
+    <label>{{ form.shop_name.label }}</label><br>
+    {{ form.shop_name }}<br><br>
+
+    <label>{{ form.about.label }}</label><br>
+    {{ form.about }}<br><br>
+
+    <label>{{ form.phone_number.label }}</label><br>
+    {{ form.phone_number }}<br>
+    {% for error in form.phone_number.errors %}
+        <span style="color:red;">{{ error }}</span><br>
+    {% endfor %}
+    <br>
+
+    <label>{{ form.location.label }}</label><br>
+    {{ form.location }}<br><br>
+
+    <label>{{ form.open_hours.label }}</label><br>
+    {{ form.open_hours }}<br><br>
+
+    <!-- Gallery Images -->
+    <h3>Gallery Images (4 slots)</h3>
+    {% for field in gallery_fields %}
+        <label>{{ field.label }}</label><br>
+        {{ field }}<br><br>
+    {% endfor %}
+
+    {{ form.submit }}
+</form>
+
+<!-- Existing Gallery Images -->
+{% if gallery_images %}
+<h3>Existing Gallery Images</h3>
+<div style="display:flex; flex-wrap:wrap; gap:10px;">
+    {% for img in gallery_images %}
+        <div style="text-align:center;">
+            <img src="{{ url_for('static', filename='uploads/' ~ img.image_url) }}" width="120"><br>
+            <form action="{{ url_for('delete_gallery_image', image_id=img.id) }}" method="POST">
+                {{ form.hidden_tag() }}
+                <button type="submit">Delete</button>
+            </form>
+        </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+{% endblock %}

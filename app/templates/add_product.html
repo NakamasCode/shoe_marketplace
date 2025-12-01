@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Add New Product</h2>
+
+<form method="POST" enctype="multipart/form-data">
+    {{ form.hidden_tag() }}
+
+    <!-- Product Name -->
+    <label>{{ form.name.label }}</label><br>
+    {{ form.name }}<br><br>
+
+    <!-- Description -->
+    <label>{{ form.description.label }}</label><br>
+    {{ form.description(rows="4") }}<br><br>
+
+    <!-- Price -->
+    <label>{{ form.price.label }}</label><br>
+    {{ form.price }}<br><br>
+
+    <!-- Category -->
+    <label>{{ form.category_id.label }}</label><br>
+    {{ form.category_id }}<br><br>
+
+    <!-- Size Unit -->
+    <label>{{ form.size_unit.label }}</label><br>
+    {{ form.size_unit }}<br><br>
+
+    <!-- Stock Quantity -->
+    <label>{{ form.stock_quantity.label }}</label><br>
+    {{ form.stock_quantity }}<br><br>
+
+    <h3>Product Images (4 slots)</h3>
+    {% for field in product_image_fields %}
+        <label>{{ field.label }}</label><br>
+        {{ field }}<br><br>
+    {% endfor %}
+
+    {{ form.submit }}
+</form>
+
+{% endblock %}

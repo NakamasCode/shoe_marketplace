@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="max-width: 800px; margin: 30px auto;">
+
+    <h2 style="text-align: center;">Edit Product</h2>
+    <p style="text-align: center;">Updating: <strong>{{ product.name }}</strong></p>
+
+    <form method="POST" enctype="multipart/form-data">
+        {{ form.hidden_tag() }}
+
+        <!-- Product Name -->
+        <div class="mb-3">
+            {{ form.name.label }}
+            {{ form.name(class="form-control") }}
+        </div>
+
+        <!-- Product Description -->
+        <div class="mb-3">
+            {{ form.description.label }}
+            {{ form.description(class="form-control") }}
+        </div>
+
+        <!-- Price -->
+        <div class="mb-3">
+            {{ form.price.label }}
+            {{ form.price(class="form-control") }}
+        </div>
+
+        <!-- Stock Quantity -->
+        <div class="mb-3">
+            {{ form.stock_quantity.label }}
+            {{ form.stock_quantity(class="form-control") }}
+        </div>
+
+        <!-- Size / Unit -->
+        <div class="mb-3">
+            {{ form.size_unit.label }}
+            {{ form.size_unit(class="form-control") }}
+        </div>
+
+        <!-- Category -->
+        <div class="mb-3">
+            {{ form.category_id.label }}
+            {{ form.category_id(class="form-select") }}
+        </div>
+
+        <!-- Upload New Images -->
+        <h5>Upload New Images</h5>
+        {% for field in product_image_fields %}
+            <div class="mb-3">
+                {{ field.label }}
+                {{ field(class="form-control") }}
+            </div>
+        {% endfor %}
+
+        <!-- Display Existing Images -->
+        {% if existing_images %}
+            <h5>Existing Images</h5>
+            <div style="display:flex; gap:10px; flex-wrap: wrap;">
+                {% for img in existing_images %}
+                    <div>
+                        <img src="{{ url_for('static', filename='uploads/' ~ img.image_url) }}" 
+                             style="width:100px; height:100px; object-fit:cover; border:1px solid #ccc; padding:2px;">
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <!-- Submit Button -->
+        <div style="margin-top:20px; text-align:center;">
+            <button type="submit" class="btn btn-primary">Update Product</button>
+            <a href="{{ url_for('seller_dashboard') }}" class="btn btn-secondary">Cancel</a>
+        </div>
+
+        
+
+    </form>
+</div>
+{% endblock %}

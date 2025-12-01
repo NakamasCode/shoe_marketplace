@@ -66,9 +66,12 @@ class SellerImage(db.Model):
 class Category(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(140), nullable=False)
-    
+
+    # NEW → link category to the seller who created it
+    seller_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+
+    # Nested categories (optional)
     parent_id = db.Column(db.Integer, db.ForeignKey('category.id'))
-    
     children = db.relationship(
         'Category',
         backref=db.backref('parent', remote_side=[id]),

@@ -18,7 +18,7 @@
 
         {% if current_user.is_authenticated %}
             {% if current_user.role == 'seller' %}
-                <a href="{{ url_for('seller_dashboard') }}">Dashboard</a>
+                <a href="{{ url_for('seller_profile') }}">My Profile</a>
             {% elif current_user.role == 'buyer' %}
                 <a href="{{ url_for('buyer_dashboard') }}">Dashboard</a>
             {% endif %}
