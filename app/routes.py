@@ -19,7 +19,7 @@ def index():
         if current_user.role == 'seller':
             return redirect(url_for('seller_dashboard'))
         else:
-            return redirect(url_for('buyer_dashboard'))
+            return redirect(url_for('select_seller'))
     
     # Public homepage for not-logged-in users
     return render_template('index.html', title='Home')
@@ -40,7 +40,7 @@ def login():
 
         next_page = request.args.get('next')
         if not next_page or urlparse(next_page).netloc != '':
-            return redirect(url_for('seller_dashboard') if user.role == 'seller' else url_for('buyer_dashboard'))
+            return redirect(url_for('seller_dashboard') if user.role == 'seller' else url_for('select_seller'))
 
         return redirect(next_page)
 
@@ -67,7 +67,7 @@ def register():
             db.session.add(profile)
             db.session.commit()
             return redirect(url_for('seller_dashboard'))
-        return redirect(url_for('buyer_dashboard'))
+        return redirect(url_for('select_seller'))
 
     return render_template('register.html', title='Register', form=form)
 
@@ -96,15 +96,15 @@ def seller_dashboard():
     return render_template('seller_dashboard.html', title='Dashboard', products=products, categories=categories, form=form)
 
 
-@app.route('/buyer/dashboard')
-@login_required
-def buyer_dashboard():
-    if current_user.role != 'buyer':
-        flash('Access Denied.', 'danger')
-        return redirect(url_for('index'))
-    # Show all sellers for buyer
-    sellers = User.query.filter_by(role='seller').all()
-    return render_template('buyer_dashboard.html', title='Dashboard', sellers=sellers)
+# @app.route('/buyer/dashboard')
+# @login_required
+# def buyer_dashboard():
+#     if current_user.role != 'buyer':
+#         flash('Access Denied.', 'danger')
+#         return redirect(url_for('index'))
+#     # Show all sellers for buyer
+#     sellers = User.query.filter_by(role='seller').all()
+#     return render_template('buyer_dashboard.html', title='Dashboard', sellers=sellers)
 
 
 
@@ -498,3 +498,19 @@ def delete_product_image(id):
     db.session.commit()
     flash("Image deleted!", "success")
     return redirect(url_for('edit_product', id=product.id))
+
+
+@app.route('/buyers/sellers')
+@login_required
+def select_seller():
+    sellers = User.query.filter_by(role="seller").join(Product).filter(Product.stock_quantity > 0).all()
+    return render_template('buyers_sellers.html', sellers=sellers)
+    
+    
+    
+@app.route('/buyers/seller/<int:seller_id>/products')
+def view_seller_products(seller_id):
+    seller = User.query.get_or_404(seller_id)
+    products = Product.query.filter_by(seller_id=seller_id).all()
+    categories = Category.query.filter_by(seller_id=seller_id).all()
+    return render_template('buyers_product.html', seller=seller, products=products, categories= categories)

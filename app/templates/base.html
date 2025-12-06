@@ -20,7 +20,7 @@
             {% if current_user.role == 'seller' %}
                 <a href="{{ url_for('seller_profile') }}">My Profile</a>
             {% elif current_user.role == 'buyer' %}
-                <a href="{{ url_for('buyer_dashboard') }}">Dashboard</a>
+                <a href="{{ url_for('select_seller') }}">Dashboard</a>
             {% endif %}
             <a href="{{ url_for('logout') }}">Logout</a>
             <span>Logged in as {{ current_user.username }}</span>

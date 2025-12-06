@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="max-width: 1000px; margin: 30px auto;">
+
+    <h1>{{ seller.username }}'s Products</h1>
+
+    <div style="display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; margin-top:20px;">
+        {% for product in products %}
+            {% set images = product.images.all() if product.images.__class__.__name__ == 'AppenderQuery' else product.images %}
+            <div style="border: 1px solid #ddd; padding:10px; width:220px; border-radius:8px;">
+                <h3>{{ product.name }}</h3>
+                <p>Price: ₦{{ "{:,.2f}".format(product.price) }}</p>
+                <p>Stock: {{ product.stock_quantity }}</p>
+                
+                {% if images|length > 0 %}
+                    <img src="{{ url_for('static', filename='uploads/' ~ images[0].image_url) }}" 
+                         style="width:100%; height:150px; object-fit:cover;">
+                {% else %}
+                    <div style="width:100%; height:150px; background-color:#eee; display:flex; align-items:center; justify-content:center;">
+                        No Image
+                    </div>
+                {% endif %}
+            </div>
+        {% else %}
+            <p>No products from this seller yet.</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
