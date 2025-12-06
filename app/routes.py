@@ -89,7 +89,11 @@ def seller_dashboard():
     # Fetch seller's products and categories for dashboard
     products = Product.query.filter_by(seller_id=current_user.id).all()
     categories = Category.query.filter_by(seller_id=current_user.id).all()
-    return render_template('seller_dashboard.html', title='Dashboard', products=products, categories=categories)
+    form = CategoryForm()
+    
+    form.parent_id.choices = [(0, 'No parent')] + [(c.id, c.name) for c in categories]
+    
+    return render_template('seller_dashboard.html', title='Dashboard', products=products, categories=categories, form=form)
 
 
 @app.route('/buyer/dashboard')
@@ -250,12 +254,12 @@ def delete_gallery_image(image_id):
 
 # ------------------------- CATEGORY ROUTES -------------------------
 
-@app.route('/seller/category/add', methods=['GET', 'POST'])
+@app.route('/seller/category/add', methods=['POST'])
 @login_required
-def add_category():
+def quick_add_category():
     if current_user.role != 'seller':
         flash("Access denied.", "danger")
-        return redirect(url_for('index'))
+        return redirect(url_for('seller_dashboard'))
 
     form = CategoryForm()
     categories = Category.query.filter_by(seller_id=current_user.id).all()
@@ -271,37 +275,9 @@ def add_category():
         db.session.add(new_category)
         db.session.commit()
         flash(f'Category "{new_category.name}" added!', 'success')
-        return redirect(url_for('add_category'))
+        
 
-    return render_template('add_category.html', title='Add Category', form=form)
-
-
-@app.route('/seller/category/<int:id>/edit', methods=['GET', 'POST'])
-@login_required
-def edit_category(id):
-    category = Category.query.get_or_404(id)
-
-    if category.seller_id != current_user.id:
-        flash("Access denied.", "danger")
-        return redirect(url_for('seller_dashboard'))
-
-    form = CategoryForm()
-    categories = Category.query.filter_by(seller_id=current_user.id).all()
-    form.parent_id.choices = [(0, 'No parent')] + [(c.id, c.name) for c in categories if c.id != id]
-
-    if request.method == 'GET':
-        form.name.data = category.name
-        form.parent_id.data = category.parent_id if category.parent_id else 0
-
-    if form.validate_on_submit():
-        category.name = form.name.data
-        category.parent_id = form.parent_id.data if form.parent_id.data != 0 else None
-        db.session.commit()
-        flash("Category updated!", "success")
-        return redirect(url_for('edit_category', id=id))
-
-    return render_template('edit_category.html', title='Edit Category', form=form, category=category)
-
+    return redirect(url_for('seller_dashboard'))
 
 @app.route('/seller/category/<int:id>/delete', methods=['POST'])
 @login_required

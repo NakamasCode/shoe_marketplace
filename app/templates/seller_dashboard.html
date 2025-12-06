@@ -7,7 +7,43 @@
     <h1 style="text-align: center;">Seller Dashboard</h1>
     <p style="text-align: center;">Welcome, {{ current_user.username }}!</p>
 
-    <!-- Navigation Buttons -->
+    <!-- Add Category Section -->
+    <div style="margin: 30px 0; padding: 20px; border: 1px solid #ddd;">
+        <h3>Add Category</h3>
+        <form method="POST" action="{{ url_for('quick_add_category') }}">
+            {{ form.hidden_tag() }}
+
+            <div style="margin-bottom: 10px;">
+                {{ form.name.label }}
+                {{ form.name(class="form-control") }}
+            </div>
+
+            <div style="margin-bottom: 10px;">
+                {{ form.parent_id.label }}
+                {{ form.parent_id(class="form-select") }}
+            </div>
+
+            <button type="submit" class="btn btn-primary">Add Category</button>
+        </form>
+    </div>
+
+    <!-- Category List -->
+    <div style="margin-bottom: 30px;">
+        <h3>Your Categories</h3>
+        {% for cat in categories %}
+        <div style="display:flex; justify-content:space-between; border-bottom:1px solid #eee; padding: 5px;">
+            <span>{{ cat.name }}</span>
+
+            <form method="POST" action="{{ url_for('delete_category', id=cat.id) }}">
+                <button type="submit" style="color:red; border:none; background:none;">Delete</button>
+            </form>
+        </div>
+        {% else %}
+            <p>No categories yet</p>
+        {% endfor %}
+    </div>
+
+    <!-- Navigation Buttons: Add Product + Logout -->
     <div style="text-align: center; margin-bottom: 30px;">
         <a href="{{ url_for('add_product') }}">
             <button style="padding: 10px 20px; margin-right: 10px;">Add Product</button>
@@ -23,7 +59,7 @@
             {% set images = product.images.all() if product.images.__class__.__name__ == 'AppenderQuery' else product.images %}
             <a href="{{ url_for('product_detail', product_id=product.id) }}" style="text-decoration: none; color: inherit;">
                 <div style="border: 1px solid #ddd; border-radius: 8px; width: 220px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.1); transition: transform 0.2s;">
-                    
+
                     <!-- Product Image -->
                     {% if images|length > 0 %}
                         <img src="{{ url_for('static', filename='uploads/' ~ images[0].image_url) }}" style="width: 100%; height: 180px; object-fit: cover;">
