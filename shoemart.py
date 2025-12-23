@@ -21,5 +21,3 @@ def make_shell_context():
         'ProductImage': ProductImage
 }
 
-with app.app_context():
-    db.create_all()  # Creates all tables if they don't exist
