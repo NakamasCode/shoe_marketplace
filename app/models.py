@@ -5,22 +5,25 @@ from flask_login import UserMixin
 from itsdangerous import URLSafeTimedSerializer
 from flask import current_app
 
-
-
 # ----------------------
 # USER
 # ----------------------
 class User(UserMixin, db.Model):
+    __tablename__ = "users"  # keeps the table name consistent
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(120), index=True, unique=True)
     email = db.Column(db.String(120), index=True, unique=True)
-    password_hash = db.Column(db.String(128))
+    password_hash = db.Column(db.String(512))
     role = db.Column(db.String(10))
     last_seen = db.Column(db.DateTime, default=datetime.utcnow)
 
     # Relationships
     seller_profile = db.relationship('SellerProfile', backref='user', uselist=False)
+    buyer_profile = db.relationship('BuyerProfile', backref='user', uselist=False)
     products = db.relationship('Product', backref='seller', lazy='dynamic')
+    sent_messages = db.relationship('Message', foreign_keys='Message.sender_id', backref='sender', lazy='dynamic')
+    received_messages = db.relationship('Message', foreign_keys='Message.receiver_id', backref='receiver', lazy='dynamic')
+    categories = db.relationship('Category', backref='creator', lazy='dynamic')
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -29,16 +32,14 @@ class User(UserMixin, db.Model):
         return check_password_hash(self.password_hash, password)
 
     def get_reset_password_token(self, expires_in=600):
-        """Generate a timed token for password reset (default 10 min)."""
         s = URLSafeTimedSerializer(current_app.config['SECRET_KEY'])
         return s.dumps({'user_id': self.id})
 
     @staticmethod
     def verify_reset_password_token(token):
-        """Verify token and return the user if valid."""
         s = URLSafeTimedSerializer(current_app.config['SECRET_KEY'])
         try:
-            data = s.loads(token, max_age=600)  # token valid for 10 min
+            data = s.loads(token, max_age=600)
         except:
             return None
         return User.query.get(data['user_id'])
@@ -46,17 +47,18 @@ class User(UserMixin, db.Model):
     def __repr__(self):
         return f'<User {self.username} | Role: {self.role}>'
 
-
+# ----------------------
+# BUYER PROFILE
+# ----------------------
 class BuyerProfile(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), unique=True, nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), unique=True, nullable=False)
 
     full_name = db.Column(db.String(120))
     email = db.Column(db.String(120))
     billing_address = db.Column(db.String(250))
     payment_method = db.Column(db.String(50))
-    profile_image = db.Column(db.String(200))  # new column
-    user = db.relationship('User', backref='buyer_profile', uselist=False)
+    profile_image = db.Column(db.String(200))
 
     def __repr__(self):
         return f'<BuyerProfile {self.full_name or self.user.username}>'
@@ -66,7 +68,7 @@ class BuyerProfile(db.Model):
 # ----------------------
 class SellerProfile(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), unique=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), unique=True)
 
     shop_name = db.Column(db.String(140))
     shop_logo = db.Column(db.String(200))
@@ -81,7 +83,6 @@ class SellerProfile(db.Model):
     def __repr__(self):
         return f'<SellerProfile {self.shop_name}>'
 
-
 # ----------------------
 # SELLER IMAGES
 # ----------------------
@@ -91,30 +92,24 @@ class SellerImage(db.Model):
     image_url = db.Column(db.String(200))
     description = db.Column(db.String(200))
 
-
 # ----------------------
 # CATEGORY
 # ----------------------
 class Category(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(140), nullable=False)
-
-    # NEW → link category to the seller who created it
-    seller_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-
-    # Nested categories (optional)
+    seller_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     parent_id = db.Column(db.Integer, db.ForeignKey('category.id'))
+    
     children = db.relationship(
         'Category',
         backref=db.backref('parent', remote_side=[id]),
         lazy='dynamic'
     )
-
     products = db.relationship('Product', backref='category', lazy='dynamic')
 
     def __repr__(self):
         return f'<Category {self.name}>'
-
 
 # ----------------------
 # PRODUCT
@@ -128,14 +123,14 @@ class Product(db.Model):
     stock_quantity = db.Column(db.Integer, default=0)
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
 
-    seller_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    seller_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     category_id = db.Column(db.Integer, db.ForeignKey('category.id'))
 
     images = db.relationship('ProductImage', backref='product', lazy='dynamic')
+    messages = db.relationship('Message', backref='product', lazy='dynamic')
 
     def __repr__(self):
         return f'<Product {self.name}>'
-
 
 # ----------------------
 # PRODUCT IMAGES
@@ -146,25 +141,21 @@ class ProductImage(db.Model):
     image_url = db.Column(db.String(200))
     description = db.Column(db.String(200))
 
-
-
+# ----------------------
+# MESSAGES
+# ----------------------
 class Message(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     
-    sender_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    receiver_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    
-    product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=True)  # Optional, link message to product
+    sender_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    receiver_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=True)
     
     content = db.Column(db.Text, nullable=False)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
-    
-    # Relationships
-    sender = db.relationship('User', foreign_keys=[sender_id], backref='sent_messages')
-    receiver = db.relationship('User', foreign_keys=[receiver_id], backref='received_messages')
-    product = db.relationship('Product', backref='messages')
 
-
+    def __repr__(self):
+        return f'<Message {self.id}>'
 
 # ----------------------
 # LOGIN LOADER
