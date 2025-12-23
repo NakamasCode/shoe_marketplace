@@ -5,14 +5,14 @@
 
     <!-- HEADER -->
     <div class="chat-header">
-        <a href="{{ url_for('inbox') }}" class="back-btn" title="Back to inbox">
+        <a href="{{ url_for('main.main.inbox') }}" class="back-btn" title="Back to inbox">
             ←
         </a>
 
         <div class="title">
             <!-- Seller's name clickable for buyers -->
             {% if current_user.role != 'seller' %}
-                <a href="{{ url_for('seller_profile', user_id=other_user.id) }}" class="text-decoration-none fw-bold">
+                <a href="{{ url_for('main.main.seller_profile', user_id=other_user.id) }}" class="text-decoration-none fw-bold">
                     {{ other_user.username }}
                 </a>
             {% else %}

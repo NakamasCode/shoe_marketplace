@@ -1,8 +1,9 @@
-from app import app,db, login
+from app import db, login
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin
 from itsdangerous import URLSafeTimedSerializer
+from flask import current_app
 
 
 
@@ -29,13 +30,13 @@ class User(UserMixin, db.Model):
 
     def get_reset_password_token(self, expires_in=600):
         """Generate a timed token for password reset (default 10 min)."""
-        s = URLSafeTimedSerializer(app.config['SECRET_KEY'])
+        s = URLSafeTimedSerializer(current_app.config['SECRET_KEY'])
         return s.dumps({'user_id': self.id})
 
     @staticmethod
     def verify_reset_password_token(token):
         """Verify token and return the user if valid."""
-        s = URLSafeTimedSerializer(app.config['SECRET_KEY'])
+        s = URLSafeTimedSerializer(current_app.config['SECRET_KEY'])
         try:
             data = s.loads(token, max_age=600)  # token valid for 10 min
         except:

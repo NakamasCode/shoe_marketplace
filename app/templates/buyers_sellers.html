@@ -9,7 +9,7 @@
 
     <!-- Inbox button -->
     <div class="text-center mb-4">
-        <a href="{{ url_for('inbox') }}" class="btn btn-primary btn-lg">
+        <a href="{{ url_for('main.inbox') }}" class="btn btn-primary btn-lg">
             <i class="fas fa-envelope"></i> Inbox
         </a>
     </div>
@@ -46,7 +46,7 @@
                     </div>
 
                     <!-- View Products Button -->
-                    <a href="{{ url_for('view_seller_products', seller_id=seller.id) }}"
+                    <a href="{{ url_for('main.view_seller_products', seller_id=seller.id) }}"
                        class="btn btn-success btn-lg">
                         View Products
                     </a>

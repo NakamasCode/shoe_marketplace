@@ -1,60 +1,66 @@
 from flask import render_template, url_for, redirect, flash, request, session
-from app import  app,db
 from app.forms import ForgotPasswordForm,BuyerProfileForm,ResetPasswordForm,LoginForm, RegisterForm, SellerProfileForm, ProductForm, CategoryForm, DeleteForm, MessageForm
 from flask_login import current_user, login_user, logout_user, login_required
 from app.models import User, SellerProfile,BuyerProfile,SellerImage, Category, Product, ProductImage,SellerImage, Message
 import os
+
+from flask import Blueprint
+from flask import current_app
+
+
+
+from app import db
 
 from sqlalchemy import func
 from urllib.parse import urlparse
 from datetime import datetime, timedelta
 from werkzeug.utils import secure_filename
 
-
+main = Blueprint('main', __name__)
 # ------------------------- PUBLIC ROUTES -------------------------
 
 
 
-@app.route('/')
-@app.route('/index')
+@main.route('/')
+@main.route('/index')
 def index():
     if current_user.is_authenticated:
         # Redirect logged-in users directly to their dashboard
         if current_user.role == 'seller':
-            return redirect(url_for('seller_dashboard'))
+            return redirect(url_for('main.seller_dashboard'))
         else:
-            return redirect(url_for('select_seller'))
+            return redirect(url_for('main.select_seller'))
     
     # Public homepage for not-logged-in users
     return render_template('index.html', title='Home')
 
 
-@app.route('/login', methods=['GET', 'POST'])
+@main.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
-        return redirect(url_for('index'))
+        return redirect(url_for('main.index'))
 
     form = LoginForm()
     if form.validate_on_submit():
         user = User.query.filter_by(email=form.email.data).first()
         if user is None or not user.check_password(form.password.data):
             flash('Invalid username or password', 'danger')
-            return redirect(url_for('login'))
+            return redirect(url_for('main.login'))
         login_user(user, remember=form.remember.data)
 
         next_page = request.args.get('next')
         if not next_page or urlparse(next_page).netloc != '':
-            return redirect(url_for('seller_dashboard') if user.role == 'seller' else url_for('select_seller'))
+            return redirect(url_for('main.seller_dashboard') if user.role == 'seller' else url_for('main.select_seller'))
 
         return redirect(next_page)
 
     return render_template('login.html', title='Sign In', form=form)
 
 
-@app.route('/register', methods=['GET', 'POST'])
+@main.route('/register', methods=['GET', 'POST'])
 def register():
     if current_user.is_authenticated:
-        return redirect(url_for('index'))
+        return redirect(url_for('main.index'))
 
     form = RegisterForm()
     if form.validate_on_submit():
@@ -70,26 +76,26 @@ def register():
             profile = SellerProfile(user_id=user.id)
             db.session.add(profile)
             db.session.commit()
-            return redirect(url_for('seller_dashboard'))
-        return redirect(url_for('select_seller'))
+            return redirect(url_for('main.seller_dashboard'))
+        return redirect(url_for('main.select_seller'))
 
     return render_template('register.html', title='Register', form=form)
 
 
-@app.route('/logout')
+@main.route('/logout')
 def logout():
     logout_user()
-    return redirect(url_for('index'))
+    return redirect(url_for('main.index'))
 
 
 # ------------------------- DASHBOARDS -------------------------
 
-@app.route('/seller/dashboard')
+@main.route('/seller/dashboard')
 @login_required
 def seller_dashboard():
     if current_user.role != 'seller':
         flash("Access denied.", "danger")
-        return redirect(url_for('index'))
+        return redirect(url_for('main.index'))
     # Fetch seller's products and categories for dashboard
     products = Product.query.filter_by(seller_id=current_user.id).all()
     categories = Category.query.filter_by(seller_id=current_user.id).all()
@@ -102,7 +108,7 @@ def seller_dashboard():
     return render_template('seller_dashboard.html', title='Dashboard', products=products, category_form=category_form,categories=categories, form=form)
 
 
-# @app.route('/buyer/dashboard')
+# @main.route('/buyer/dashboard')
 # @login_required
 # def buyer_dashboard():
 #     if current_user.role != 'buyer':
@@ -114,12 +120,12 @@ def seller_dashboard():
 
 
 
-@app.route('/seller/<int:id>')
+@main.route('/seller/<int:id>')
 @login_required
 def view_seller(id):
     if current_user.role != 'buyer':
         flash("Access Denied.", "danger")
-        return redirect(url_for('index'))
+        return redirect(url_for('main.index'))
 
     seller = SellerProfile.query.get_or_404(id)
     
@@ -143,15 +149,15 @@ def view_seller(id):
 
 
 # ------------------------- SELLER PROFILE -------------------------
-@app.route('/seller/profile', defaults={'user_id': None}, methods=['GET', 'POST'])
-@app.route('/seller/profile/<int:user_id>', methods=['GET'])
+@main.route('/seller/profile', defaults={'user_id': None}, methods=['GET', 'POST'])
+@main.route('/seller/profile/<int:user_id>', methods=['GET'])
 @login_required
 def seller_profile(user_id):
     # If no user_id, assume current user (for editing)
     if user_id is None:
         if current_user.role != 'seller':
             flash('Access Denied!', 'danger')
-            return redirect(url_for('index'))
+            return redirect(url_for('main.index'))
         profile_user = current_user
         editable = True
     else:
@@ -160,7 +166,7 @@ def seller_profile(user_id):
 
     if profile_user.role != 'seller':
         flash('Access Denied!', 'danger')
-        return redirect(url_for('index'))
+        return redirect(url_for('main.index'))
 
     profile = profile_user.seller_profile
 
@@ -184,7 +190,7 @@ def seller_profile(user_id):
             # handle logo and gallery upload...
             db.session.commit()
             flash('Profile updated successfully!', 'success')
-            return redirect(url_for('seller_profile'))
+            return redirect(url_for('main.seller_profile'))
 
         gallery_images = profile.images.all() if profile else []
         gallery_fields = [form.gallery_image1, form.gallery_image2, form.gallery_image3, form.gallery_image4]
@@ -204,7 +210,7 @@ def seller_profile(user_id):
 
 
 
-@app.route("/seller/<int:seller_id>/delete_logo", methods=["POST"])
+@main.route("/seller/<int:seller_id>/delete_logo", methods=["POST"])
 @login_required
 def delete_logo(seller_id):
     profile = SellerProfile.query.get_or_404(seller_id)
@@ -215,7 +221,7 @@ def delete_logo(seller_id):
         return redirect(url_for("seller_profile"))
 
     if profile.shop_logo:
-        logo_path = os.path.join(app.root_path, "static", "uploads", profile.shop_logo)
+        logo_path = os.path.join(current_app.root_path, "static", "uploads", profile.shop_logo)
         if os.path.exists(logo_path):
             try:
                 os.remove(logo_path)
@@ -232,7 +238,7 @@ def delete_logo(seller_id):
 
 
 
-@app.route("/seller/gallery/<int:image_id>/delete", methods=["POST"])
+@main.route("/seller/gallery/<int:image_id>/delete", methods=["POST"])
 @login_required
 def delete_gallery_image(image_id):
     img = SellerImage.query.get_or_404(image_id)
@@ -242,7 +248,7 @@ def delete_gallery_image(image_id):
         flash("Access denied.", "danger")
         return redirect(url_for("seller_profile"))
 
-    img_path = os.path.join(app.root_path, "static", "uploads", img.image_url)
+    img_path = os.path.join(current_app.root_path, "static", "uploads", img.image_url)
     if os.path.exists(img_path):
         try:
             os.remove(img_path)
@@ -257,12 +263,12 @@ def delete_gallery_image(image_id):
 
 # ------------------------- CATEGORY ROUTES -------------------------
 
-@app.route('/seller/category/add', methods=['POST'])
+@main.route('/seller/category/add', methods=['POST'])
 @login_required
 def quick_add_category():
     if current_user.role != 'seller':
         flash("Access denied.", "danger")
-        return redirect(url_for('seller_dashboard'))
+        return redirect(url_for('main.seller_dashboard'))
 
     form = CategoryForm()
     categories = Category.query.filter_by(seller_id=current_user.id).all()
@@ -280,16 +286,16 @@ def quick_add_category():
         flash(f'Category "{new_category.name}" added!', 'success')
         
 
-    return redirect(url_for('seller_dashboard'))
+    return redirect(url_for('main.seller_dashboard'))
 
-@app.route('/seller/category/<int:id>/edit', methods=['GET', 'POST'])
+@main.route('/seller/category/<int:id>/edit', methods=['GET', 'POST'])
 @login_required
 def edit_category(id):
     category = Category.query.get_or_404(id)
 
     if category.seller_id != current_user.id:
         flash("Access denied.", "danger")
-        return redirect(url_for('seller_dashboard'))
+        return redirect(url_for('main.seller_dashboard'))
 
     form = CategoryForm(obj=category)
 
@@ -302,20 +308,20 @@ def edit_category(id):
         category.parent_id = form.parent_id.data or None
         db.session.commit()
         flash("Category updated!", "success")
-        return redirect(url_for('seller_dashboard'))
+        return redirect(url_for('main.seller_dashboard'))
 
     return render_template('edit_category.html', form=form)
 
 
 
-@app.route('/seller/category/<int:id>/delete', methods=['POST'])
+@main.route('/seller/category/<int:id>/delete', methods=['POST'])
 @login_required
 def delete_category(id):
     category = Category.query.get_or_404(id)
 
     if category.seller_id != current_user.id:
         flash("Access denied.", "danger")
-        return redirect(url_for('seller_dashboard'))
+        return redirect(url_for('main.seller_dashboard'))
 
     # Get or create "Uncategorized"
     uncategorized = Category.query.filter_by(
@@ -339,16 +345,16 @@ def delete_category(id):
     db.session.commit()
 
     flash("Category deleted. Products moved to Uncategorized.", "success")
-    return redirect(url_for('seller_dashboard'))
+    return redirect(url_for('main.seller_dashboard'))
 
 
 
-@app.route('/seller/product/add', methods=['GET', 'POST'])
+@main.route('/seller/product/add', methods=['GET', 'POST'])
 @login_required
 def add_product():
     if current_user.role != 'seller':
         flash("Access denied.", "danger")
-        return redirect(url_for('index'))
+        return redirect(url_for('main.index'))
 
     form = ProductForm()
    
@@ -395,7 +401,7 @@ def add_product():
             file = field.data
             if file and file.filename:
                 filename = secure_filename(file.filename)
-                upload_path = os.path.join(app.root_path, 'static/uploads', filename)
+                upload_path = os.path.join(current_app.root_path, 'static/uploads', filename)
                 file.save(upload_path)
 
                 product_image = ProductImage(
@@ -407,7 +413,7 @@ def add_product():
         db.session.commit()
 
         flash(f'Product "{new_product.name}" added successfully!', 'success')
-        return redirect(url_for('seller_dashboard'))
+        return redirect(url_for('main.seller_dashboard'))
 
     return render_template(
         'add_product.html',
@@ -418,14 +424,14 @@ def add_product():
 
 
 
-@app.route('/seller/product/<int:id>/edit', methods=['GET', 'POST'])
+@main.route('/seller/product/<int:id>/edit', methods=['GET', 'POST'])
 @login_required
 def edit_product(id):
     product = Product.query.get_or_404(id)
 
     if product.seller_id != current_user.id:
         flash('Access Denied.', 'danger')
-        return redirect(url_for('seller_dashboard'))
+        return redirect(url_for('main.seller_dashboard'))
 
     form = ProductForm()
 
@@ -466,13 +472,13 @@ def edit_product(id):
             file = field.data
             if file and file.filename:
                 filename = secure_filename(file.filename)
-                filepath = os.path.join(app.root_path, 'static/uploads', filename)
+                filepath = os.path.join(current_app.root_path, 'static/uploads', filename)
                 file.save(filepath)
 
                 if idx < len(existing_images):
                     # Replace existing image
                     old_image = existing_images[idx]
-                    old_path = os.path.join(app.root_path, 'static/uploads', old_image.image_url)
+                    old_path = os.path.join(current_app.root_path, 'static/uploads', old_image.image_url)
                     if os.path.exists(old_path):
                         os.remove(old_path)
                     old_image.image_url = filename
@@ -484,7 +490,7 @@ def edit_product(id):
 
         db.session.commit()
         flash(f'Product "{product.name}" updated successfully!', 'success')
-        return redirect(url_for('edit_product', id=product.id))
+        return redirect(url_for('main.edit_product', id=product.id))
 
     return render_template(
         'edit_product.html',
@@ -496,17 +502,17 @@ def edit_product(id):
     )
 
 
-@app.route('/seller/product/<int:id>/delete', methods=['POST'])
+@main.route('/seller/product/<int:id>/delete', methods=['POST'])
 @login_required
 def delete_product(id):
     product = Product.query.get_or_404(id)
     if product.seller_id != current_user.id:
         flash("Access Denied.", "danger")
-        return redirect(url_for('seller_dashboard'))
+        return redirect(url_for('main.seller_dashboard'))
 
     # Delete associated images first
     for img in product.images:
-        filepath = os.path.join(app.root_path, 'static/uploads', img.image_url)
+        filepath = os.path.join(current_app.root_path, 'static/uploads', img.image_url)
         if os.path.exists(filepath):
             os.remove(filepath)
         db.session.delete(img)
@@ -514,12 +520,12 @@ def delete_product(id):
     db.session.delete(product)
     db.session.commit()
     flash('Product deleted!', 'success')
-    return redirect(url_for('seller_dashboard'))
+    return redirect(url_for('main.seller_dashboard'))
 
 
 # ------------------------- PRODUCT IMAGE DELETE -------------------------
 
-@app.route('/seller/product/image/<int:id>/delete', methods=['POST'])
+@main.route('/seller/product/image/<int:id>/delete', methods=['POST'])
 @login_required
 def delete_product_image(id):
     image = ProductImage.query.get_or_404(id)
@@ -527,19 +533,19 @@ def delete_product_image(id):
 
     if product.seller_id != current_user.id:
         flash("Access Denied.", "danger")
-        return redirect(url_for('seller_dashboard'))
+        return redirect(url_for('main.seller_dashboard'))
 
-    filepath = os.path.join(app.root_path, 'static/uploads', image.image_url)
+    filepath = os.path.join(current_app.root_path, 'static/uploads', image.image_url)
     if os.path.exists(filepath):
         os.remove(filepath)
 
     db.session.delete(image)
     db.session.commit()
     flash("Image deleted!", "success")
-    return redirect(url_for('edit_product', id=product.id))
+    return redirect(url_for('main.edit_product', id=product.id))
 
 
-@app.route('/buyers/sellers')
+@main.route('/buyers/sellers')
 @login_required
 def select_seller():
     # Get sellers who have products in stock along with their profile (if exists)
@@ -554,12 +560,12 @@ def select_seller():
     )
     return render_template('buyers_sellers.html', sellers=sellers)
 
-@app.route('/buyer/profile', methods=['GET', 'POST'])
+@main.route('/buyer/profile', methods=['GET', 'POST'])
 @login_required
 def buyer_profile():
     if current_user.role != 'buyer':
         flash("Access denied!", "danger")
-        return redirect(url_for('index'))
+        return redirect(url_for('main.index'))
 
     # Get or create the profile
     profile = BuyerProfile.query.filter_by(user_id=current_user.id).first()
@@ -587,33 +593,33 @@ def buyer_profile():
         if form.profile_image.data:
             file = form.profile_image.data
             filename = secure_filename(file.filename)
-            filepath = os.path.join(app.root_path, 'static/uploads', filename)
+            filepath = os.path.join(current_app.root_path, 'static/uploads', filename)
             file.save(filepath)
             profile.profile_image = filename
 
         profile.user.last_seen = datetime.utcnow()
         db.session.commit()
         flash("Profile updated successfully!", "success")
-        return redirect(url_for('buyer_profile'))
+        return redirect(url_for('main.buyer_profile'))
 
     return render_template('buyer_profile.html', form=form, profile=profile)
 
     
     
-@app.route('/cart')
+@main.route('/cart')
 @login_required
 def view_cart():
     # Demo page for now
     return "<h1>Cart Page (Demo)</h1>"
 
 
-@app.route('/payment-method')
+@main.route('/payment-method')
 @login_required
 def payment_method():
     return "<h1>Payment Method Page (Demo)</h1>"
 
     
-@app.route('/buyers/seller/<int:seller_id>/products')
+@main.route('/buyers/seller/<int:seller_id>/products')
 def view_seller_products(seller_id):
     seller = User.query.get_or_404(seller_id)
     products = Product.query.filter_by(seller_id=seller_id).all()
@@ -621,7 +627,7 @@ def view_seller_products(seller_id):
     return render_template('buyers_product.html', seller=seller, products=products, categories= categories)
 
 
-@app.route('/product/<int:product_id>')
+@main.route('/product/<int:product_id>')
 def product_detail(product_id):
     product = Product.query.get_or_404(product_id)
     seller = User.query.get(product.seller_id)
@@ -641,7 +647,7 @@ def product_detail(product_id):
     )
 
 
-@app.route('/product/<int:product_id>/message', methods=['GET', 'POST'])
+@main.route('/product/<int:product_id>/message', methods=['GET', 'POST'])
 @login_required
 def message_seller(product_id):
     product = Product.query.get_or_404(product_id)
@@ -649,7 +655,7 @@ def message_seller(product_id):
     # Only buyers can send messages
     if current_user.role != 'buyer':
         flash("Only buyers can send messages to sellers.", "danger")
-        return redirect(url_for('product_detail', product_id=product.id))
+        return redirect(url_for('main.product_detail', product_id=product.id))
 
     seller = User.query.get_or_404(product.seller_id)
     form = MessageForm()
@@ -665,11 +671,11 @@ def message_seller(product_id):
         db.session.add(msg)
         db.session.commit()
         flash("Message sent to seller!", "success")
-        return redirect(url_for('product_detail', product_id=product.id))
+        return redirect(url_for('main.product_detail', product_id=product.id))
 
     return render_template('message_form.html', form=form, product=product, seller=seller)
 
-@app.route('/inbox')
+@main.route('/inbox')
 @login_required
 def inbox():
     products_info = []
@@ -730,7 +736,7 @@ def inbox():
     return render_template('inbox.html', products_info=products_info)
 
 
-@app.route('/messages/<int:product_id>/<int:user_id>', methods=['GET', 'POST'])
+@main.route('/messages/<int:product_id>/<int:user_id>', methods=['GET', 'POST'])
 @login_required
 def conversation(product_id, user_id):
     product = Product.query.get_or_404(product_id)
@@ -746,7 +752,7 @@ def conversation(product_id, user_id):
         )
         db.session.add(msg)
         db.session.commit()
-        return redirect(url_for('conversation', product_id=product.id, user_id=other_user.id))
+        return redirect(url_for('main.conversation', product_id=product.id, user_id=other_user.id))
 
     # Fetch conversation messages
     msgs = Message.query.filter(
@@ -758,7 +764,7 @@ def conversation(product_id, user_id):
 
 
 
-@app.route('/forgot-password')
+@main.route('/forgot-password')
 def forgot_password():
     form = ForgotPasswordForm()
     return render_template('forgot_password.html', title='Forgot Password', form=form)
@@ -766,7 +772,7 @@ def forgot_password():
 # -------------------------
 # RESET PASSWORD PAGE
 # -------------------------
-@app.route('/reset-password')
+@main.route('/reset-password')
 def reset_password():
     form = ResetPasswordForm()
     return render_template('reset_password.html', title='Reset Password', form=form)

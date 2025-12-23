@@ -7,7 +7,7 @@
 
     <!-- Back button -->
     <div class="mb-3">
-        <a href="{{ url_for('index') }}" class="btn btn-outline-secondary btn-sm">
+        <a href="{{ url_for('main.index') }}" class="btn btn-outline-secondary btn-sm">
             ← Back
         </a>
     </div>
@@ -25,7 +25,7 @@
 
             <div class="col-12 col-sm-6 col-md-4 col-lg-3">
                 <div class="card product-card h-100"
-                     onclick="location.href='{{ url_for('product_detail', product_id=product.id) }}'">
+                     onclick="location.href='{{ url_for('main.product_detail', product_id=product.id) }}'">
 
                     {% if images|length > 0 %}
                         <img src="{{ url_for('static', filename='uploads/' ~ images[0].image_url) }}"

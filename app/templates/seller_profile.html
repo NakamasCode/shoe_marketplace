@@ -4,7 +4,7 @@
 
     <!-- Back/Home Icon -->
     <div class="mb-3">
-        <a href="{{ url_for('seller_dashboard') if editable else url_for('index') }}" 
+        <a href="{{ url_for('main.seller_dashboard') if editable else url_for('main.index') }}" 
            class="text-decoration-none text-dark">
             <i class="fas fa-arrow-left me-2"></i> {{ 'Home' if editable else 'Back' }}
         </a>

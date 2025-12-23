@@ -3,7 +3,7 @@
 
 <!-- Back button -->
 <div class="mb-3">
-    <a href="{{ url_for('index') }}" class="btn btn-outline-secondary btn-sm px-3 py-2">
+    <a href="{{ url_for('main.index') }}" class="btn btn-outline-secondary btn-sm px-3 py-2">
         ← Back
     </a>
 </div>
@@ -35,7 +35,7 @@
                         <ul class="list-group">
                             {% for buyer in info.buyers %}
                             <li class="list-group-item d-flex justify-content-between align-items-center">
-                                <a href="{{ url_for('conversation', product_id=info.product.id, user_id=buyer.id) }}">
+                                <a href="{{ url_for('main.conversation', product_id=info.product.id, user_id=buyer.id) }}">
                                     {{ buyer.username }}
                                 </a>
                                 {% if buyer.message_count > 0 %}
@@ -62,7 +62,7 @@
 
     <div class="list-group">
         {% for convo in products_info %}
-        <a href="{{ url_for('conversation', product_id=convo.product.id, user_id=convo.product.seller.id) }}"
+        <a href="{{ url_for('main.conversation', product_id=convo.product.id, user_id=convo.product.seller.id) }}"
            class="list-group-item list-group-item-action d-flex align-items-center gap-3 mb-2 shadow-sm rounded">
 
             <!-- Avatar -->

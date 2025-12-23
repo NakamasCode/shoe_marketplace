@@ -4,7 +4,7 @@
 <div class="container my-5">
     <!-- BACK BUTTON -->
     <div class="mb-3">
-        <a href="{{ request.referrer or url_for('home') }}" class="btn btn-outline-secondary">
+        <a href="{{ request.referrer or url_for('main.home') }}" class="btn btn-outline-secondary">
             <i class="fas fa-arrow-left me-1"></i> Back
         </a>
     </div>
@@ -81,7 +81,7 @@
                     </button>
 
                     <!-- MESSAGE SELLER -->
-                    <a href="{{ url_for('message_seller', product_id=product.id) }}"
+                    <a href="{{ url_for('main.message_seller', product_id=product.id) }}"
                        class="btn btn-success btn-lg">
                         Message Seller
                     </a>
@@ -98,7 +98,7 @@
                         <p class="mb-1"><strong>Location:</strong> {{ seller.seller_profile.location }}</p>
                         <p class="mb-2"><strong>Phone:</strong> {{ seller.seller_profile.phone_number }}</p>
 
-                        <a href="{{ url_for('view_seller_products', seller_id=seller.id) }}">
+                        <a href="{{ url_for('main.view_seller_products', seller_id=seller.id) }}">
                             View all products from this seller →
                         </a>
                     {% else %}
@@ -111,11 +111,11 @@
             {% if is_seller_view %}
                 <div class="mt-4">
                     <a class="btn btn-outline-primary"
-                       href="{{ url_for('edit_product', id=product.id) }}">
+                       href="{{ url_for('main.edit_product', id=product.id) }}">
                         Edit Product
                     </a>
 
-                    <form action="{{ url_for('delete_product', id=product.id) }}"
+                    <form action="{{ url_for('main.delete_product', id=product.id) }}"
                           method="POST" class="d-inline">
                         <button class="btn btn-outline-danger" type="submit">
                             Delete Product

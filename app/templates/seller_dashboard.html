@@ -17,7 +17,7 @@
 
         <!-- Add Product -->
         <div class="text-center">
-            <a href="{{ url_for('add_product') }}" class="d-block border rounded p-3 text-dark text-decoration-none" 
+            <a href="{{ url_for('main.add_product') }}" class="d-block border rounded p-3 text-dark text-decoration-none" 
                style="width: {{ card_size }}; height: {{ card_size }};">
                 <i class="fas fa-plus fa-3x"></i>
             </a>
@@ -41,7 +41,7 @@
 
 <!-- Messages -->
         <div class="text-center">
-            <a href="{{ url_for('inbox') }}" class="d-block border rounded p-3 text-dark text-decoration-none" 
+            <a href="{{ url_for('main.inbox') }}" class="d-block border rounded p-3 text-dark text-decoration-none" 
             style="width: {{ card_size }}; height: {{ card_size }};">
                 <i class="fas fa-envelope fa-3x"></i>   
             </a>
@@ -61,12 +61,12 @@
             {% for product in products %}
                 {% set images = product.images.all() %}
 
-                <a href="{{ url_for('product_detail', product_id=product.id) }}">
+                <a href="{{ url_for('main.product_detail', product_id=product.id) }}">
                     <div class="flex-shrink-0" style="width: 150px;">
                         <div class="card h-100 shadow-sm border">
 
                             {% if images|length > 0 %}
-                                <a href="{{ url_for('product_detail', product_id=product.id) }}">
+                                <a href="{{ url_for('main.product_detail', product_id=product.id) }}">
                                     <img src="{{ url_for('static', filename='uploads/' ~ images[0].image_url) }}"
                                         class="card-img-top"
                                         style="height: 120px; object-fit: cover;">
@@ -88,7 +88,7 @@
 
                                 <div class="d-flex justify-content-between mt-2">
                                     <!-- Edit icon -->
-                                    <a href="{{ url_for('edit_product', id=product.id) }}" class="text-dark" style="font-size: 1.5rem;" title="Edit Product">
+                                    <a href="{{ url_for('main.edit_product', id=product.id) }}" class="text-dark" style="font-size: 1.5rem;" title="Edit Product">
                                         <i class="fas fa-pencil-alt"></i>
                                     </a>
 
@@ -120,7 +120,7 @@
                             </div>
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                <form method="POST" action="{{ url_for('delete_product', id=product.id) }}" class="m-0">
+                                <form method="POST" action="{{ url_for('main.delete_product', id=product.id) }}" class="m-0">
                                     <button type="submit" class="btn btn-danger">Yes, Delete</button>
                                 </form>
                             </div>
@@ -148,7 +148,7 @@
 
                     <!-- Add Category Section -->
                     <div id="categoryAddSection">
-                        <form method="POST" action="{{ url_for('quick_add_category') }}">
+                        <form method="POST" action="{{ url_for('main.quick_add_category') }}">
                             {{ category_form.hidden_tag() }}
                             <div class="mb-3">
                                 {{ category_form.name.label(class="form-label") }}
@@ -165,7 +165,7 @@
                     <!-- Edit Category Section -->
                     <div id="categoryEditSection" style="display:none;">
                         {% for category in categories %}
-                        <form method="POST" action="{{ url_for('edit_category', id=category.id) }}" class="mb-2">
+                        <form method="POST" action="{{ url_for('main.edit_category', id=category.id) }}" class="mb-2">
                             <input type="text" name="name" value="{{ category.name }}" class="form-control mb-1">
                             <select name="parent_id" class="form-select mb-1">
                                 <option value="">No parent</option>
@@ -181,7 +181,7 @@
                     <!-- Delete Category Section -->
                     <div id="categoryDeleteSection" style="display:none;">
                         {% for category in categories %}
-                        <form method="POST" action="{{ url_for('delete_category', id=category.id) }}" class="mb-2">
+                        <form method="POST" action="{{ url_for('main.delete_category', id=category.id) }}" class="mb-2">
                             <span>{{ category.name }}</span>
                             <button type="submit" class="btn btn-danger btn-sm">Delete</button>
                         </form>
