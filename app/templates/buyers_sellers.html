@@ -1,20 +1,71 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div style="max-width: 1000px; margin: 30px auto; text-align:center">
-    <h1>Sellers</h1>
-    <div style="display:flex; flex-wrap:wrap; gap:20px; justify-content:center; margin-top:20px;">
-        {% for seller in sellers %}
-            <div style="border:1px solid #ddd; padding: 20px; width:200px; border-radius:8px;">
-                <h3>{{ seller.username }}</h3>
-                <p>{{ seller.products.count() }} products</p>
-                <a href="{{ url_for('view_seller_products', seller_id=seller.id) }}">
-                    <button style="padding:5px 10px;">View Products</button>
-                </a>
+<div class="container my-4">
+    <!-- Greeting and seller count -->
+    <div class="text-center mb-4">
+        <h3>Dear {{ current_user.username }}, you have {{ sellers|length }} available seller{{ 's' if sellers|length != 1 else '' }}.</h3>
+    </div>
+
+    <!-- Inbox button -->
+    <div class="text-center mb-4">
+        <a href="{{ url_for('inbox') }}" class="btn btn-primary btn-lg">
+            <i class="fas fa-envelope"></i> Inbox
+        </a>
+    </div>
+
+    <!-- Sellers grid -->
+    <div class="row justify-content-center g-4">
+        {% for seller, profile in sellers %}
+            <div class="col-12 col-md-6 col-lg-4">
+                <div class="card shadow-sm h-100 text-center p-4">
+                    <!-- Seller Logo (Centered) -->
+                    <div class="d-flex justify-content-center mb-3">
+                        {% if profile and profile.shop_logo %}
+                            <img src="{{ url_for('static', filename='uploads/' ~ profile.shop_logo) }}"
+                                 class="rounded-circle"
+                                 style="width: 120px; height: 120px; object-fit: cover;">
+                        {% else %}
+                            <i class="fas fa-store fa-7x text-secondary"></i>
+                        {% endif %}
+                    </div>
+
+                    <!-- Seller Name -->
+                    <h4 class="mb-1">{{ seller.username }}</h4>
+
+                    <!-- Number of Products -->
+                    <p class="mb-2">{{ seller.products.count() }} products</p>
+
+                    <!-- Demo Rating (optional) -->
+                    <div class="mb-3">
+                        <i class="fas fa-star text-warning"></i>
+                        <i class="fas fa-star text-warning"></i>
+                        <i class="fas fa-star text-warning"></i>
+                        <i class="fas fa-star-half-alt text-warning"></i>
+                        <i class="fas fa-star-half-alt text-warning"></i>
+                    </div>
+
+                    <!-- View Products Button -->
+                    <a href="{{ url_for('view_seller_products', seller_id=seller.id) }}"
+                       class="btn btn-success btn-lg">
+                        View Products
+                    </a>
+                </div>
             </div>
-            {% else %}
-                <p>No sellers available yet.</p>
-            {% endfor %}
+        {% else %}
+            <p class="text-center fs-4 mt-4">No sellers available yet.</p>
+        {% endfor %}
     </div>
 </div>
+
+<!-- Optional custom styles for bigger text -->
+<style>
+    h3, h4 {
+        font-weight: 600;
+        font-size: 1.5rem;
+    }
+    p, .btn {
+        font-size: 1.2rem;
+    }
+</style>
 {% endblock %}

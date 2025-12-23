@@ -3,54 +3,104 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ title + ' - Shoemarket' if title else 'Shoemarket' }}</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <title>{% block title %}Afrido{% endblock %}</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    {% block head %}{% endblock %}
 </head>
-<body>
-    <!-- App header -->
-    <header>
-        <h2>Shoemarket</h2>
-    </header>
-    
-    <!-- Navigation -->
-    <nav>
-        <a href="{{ url_for('index') }}">Home</a>
+<body class="d-flex flex-column min-vh-100">
 
-        {% if current_user.is_authenticated %}
-            {% if current_user.role == 'seller' %}
-                <a href="{{ url_for('seller_profile') }}">My Profile</a>
-            {% elif current_user.role == 'buyer' %}
-                <a href="{{ url_for('select_seller') }}">Dashboard</a>
-            {% endif %}
-            <a href="{{ url_for('logout') }}">Logout</a>
-            <span>Logged in as {{ current_user.username }}</span>
-        {% else %}
-            <a href="{{ url_for('login') }}">Login</a>
-            <a href="{{ url_for('register') }}">Register</a>
-        {% endif %}
+    <!-- Navbar (only for logged-in users) -->
+    {% if current_user.is_authenticated %}
+    <nav class="navbar navbar-light bg-light px-3">
+        <!-- Profile Icon & Username -->
+        <div class="d-flex align-items-center">
+            <a class="text-dark d-flex align-items-center" data-bs-toggle="offcanvas" href="#profileSidebar" role="button" aria-controls="profileSidebar">
+                <i class="fas fa-circle-user fa-lg me-2"></i>
+                <span class="fw-bold">{{ current_user.username }}</span>
+            </a>
+        </div>
+
+        <!-- App Name Center -->
+        <div class="mx-auto fw-bold fs-5">
+            Afrido
+        </div>
+
+        <!-- Messages Icon -->
+        <div>
+            <a href="{{ url_for('inbox') }}" class="text-dark position-relative">
+                <i class="fas fa-envelope fa-lg"></i>
+                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                    1
+                </span>
+            </a>
+        </div>
     </nav>
+    {% endif %}
 
-    <hr>
+        <!-- Offcanvas Sidebar -->
+    <div class="offcanvas offcanvas-start" tabindex="-1" id="profileSidebar" aria-labelledby="profileSidebarLabel">
+        <div class="offcanvas-body d-flex flex-column align-items-center">
+            <!-- Big Profile Icon -->
+            <i class="fas fa-circle-user fa-5x mb-4"></i>
 
-    <!-- Flash messages -->
-    {% with messages = get_flashed_messages() %}
-        {% if messages %}
-            <ul style="color: green;">
-                {% for message in messages %}
-                    <li>{{ message }}</li>
-                {% endfor %}
+            <!-- Menu Items -->
+            <ul class="list-unstyled w-100 text-center">
+                {% if current_user.role == 'seller' %}
+                    <li class="mb-4">
+                        <a href="{{ url_for('seller_profile')}}" class="text-decoration-none text-dark fw-bold fs-5">Profile</a>
+                    </li>
+                    <li class="mb-4">
+                        <a href="{{ url_for('add_product') }}" class="text-decoration-none text-dark fw-bold fs-5">Add Products</a>
+                    </li>
+                    <li class="mb-4">
+                        <a href="{{ url_for('inbox') }}" class="text-decoration-none text-dark fw-bold fs-5">Messages</a>
+                    </li>
+                {% elif current_user.role == 'buyer' %}
+                    <li class="mb-4">
+                        <a href="{{ url_for('buyer_profile')}}" class="text-decoration-none text-dark fw-bold fs-5">Profile</a>
+                    </li>
+                    <li class="mb-4">
+                        <a href="{{ url_for('view_cart')}}" class="text-decoration-none text-dark fw-bold fs-5">View Cart</a>
+                    </li>
+                    <li class="mb-4">
+                        <a href="{{ url_for('payment_method')}}" class="text-decoration-none text-dark fw-bold fs-5">Payment Method</a>
+                    </li>
+                    <li class="mb-4">
+                        <a href="{{ url_for('inbox') }}" class="text-decoration-none text-dark fw-bold fs-5">Messages</a>
+                    </li>
+                {% endif %}
+
+                <li class="mt-5">
+                    <a href="{{ url_for('logout') }}" class="text-decoration-none text-danger fw-bold fs-5">Log Out</a>
+                </li>
             </ul>
-        {% endif %}
-    {% endwith %}
+        </div>
+    </div>
 
-    <!-- Main content -->
-    <main>
+
+    <!-- Main Content -->
+    <main class="flex-grow-1 container py-4">
         {% block content %}{% endblock %}
     </main>
 
-    <!-- Footer -->
-    <footer>
-        <p>&copy; {{ current_year or 2025 }} Shoemarket</p>
+    <!-- Footer (only for logged-in users) -->
+    {% if current_user.is_authenticated %}
+    <footer class="bg-light text-center text-muted py-3 mt-auto">
+        &copy; {{ current_year if current_year else "2025" }} Afrido | Powered by NakamasCode
     </footer>
+    {% endif %}
+
+    <script src="{{ url_for('static', filename='js/product-images.js') }}"></script>
+
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    {% block scripts %}{% endblock %}
 </body>
 </html>

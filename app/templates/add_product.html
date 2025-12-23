@@ -1,42 +1,86 @@
 {% extends "base.html" %}
 {% block content %}
+<div class="container my-4" style="max-width: 600px;">
 
-<h2>Add New Product</h2>
+    <!-- Header -->
+    <div class="mb-3">
+        <a href="{{ url_for('index') }}" class="btn btn-outline-secondary btn-sm">
+        ← Back
+        </a>
+    </div>
 
-<form method="POST" enctype="multipart/form-data">
-    {{ form.hidden_tag() }}
+    <div class="d-flex align-items-center mb-4">
+        <h2 class="m-0">Add Product</h2>
+    </div>
 
-    <!-- Product Name -->
-    <label>{{ form.name.label }}</label><br>
-    {{ form.name }}<br><br>
+    <form method="POST" enctype="multipart/form-data">
+        {{ form.hidden_tag() }}
 
-    <!-- Description -->
-    <label>{{ form.description.label }}</label><br>
-    {{ form.description(rows="4") }}<br><br>
+        <!-- Product Name -->
+        <div class="mb-3">
+            <label>{{ form.name.label }}</label>
+            {{ form.name(class="form-control") }}
+        </div>
 
-    <!-- Price -->
-    <label>{{ form.price.label }}</label><br>
-    {{ form.price }}<br><br>
+        <!-- Description -->
+        <div class="mb-3">
+            <label>{{ form.description.label }}</label>
+            {{ form.description(class="form-control", rows="4") }}
+        </div>
 
-    <!-- Category -->
-    <label>{{ form.category_id.label }}</label><br>
-    {{ form.category_id }}<br><br>
+        <!-- Price -->
+        <div class="mb-3">
+            <label>{{ form.price.label }}</label>
+            {{ form.price(class="form-control") }}
+        </div>
 
-    <!-- Size Unit -->
-    <label>{{ form.size_unit.label }}</label><br>
-    {{ form.size_unit }}<br><br>
+        <!-- Category -->
+        <div class="mb-3">
+            <label>{{ form.category_id.label }}</label>
+            {{ form.category_id(class="form-control") }}
+        </div>
 
-    <!-- Stock Quantity -->
-    <label>{{ form.stock_quantity.label }}</label><br>
-    {{ form.stock_quantity }}<br><br>
+        <!-- Size/Unit -->
+        <div class="mb-3">
+            <label>{{ form.size_unit.label }}</label>
+            {{ form.size_unit(class="form-control") }}
+        </div>
 
-    <h3>Product Images (4 slots)</h3>
-    {% for field in product_image_fields %}
-        <label>{{ field.label }}</label><br>
-        {{ field }}<br><br>
-    {% endfor %}
+        <!-- Stock Quantity -->
+        <div class="mb-3">
+            <label>{{ form.stock_quantity.label }}</label>
+            {{ form.stock_quantity(class="form-control") }}
+        </div>
 
-    {{ form.submit }}
-</form>
+        <!-- Product Images -->
+        <h4 class="mt-4 mb-3 text-center">Product Images</h4>
+        <div class="d-flex gap-3 flex-wrap justify-content-center mb-3">
+            {% for field in [form.product_image1, form.product_image2, form.product_image3, form.product_image4] %}
+                <label for="{{ field.id }}" class="gallery-slot cursor-pointer text-center">
+                    <div class="border rounded d-flex align-items-center justify-content-center"
+                         style="width:120px; height:120px; overflow:hidden;">
+                        <i class="fas fa-image fa-3x text-secondary"></i>
+                    </div>
+                    {{ field(id=field.id, style="display:none;") }}
+                </label>
+            {% endfor %}
+        </div>
 
+        <!-- Submit -->
+        <div class="text-center">
+            {{ form.submit(class="btn btn-primary") }}
+        </div>
+    </form>
+</div>
+
+<style>
+    .cursor-pointer { cursor: pointer; }
+
+    /* Mobile: stacked gallery centered */
+    @media (max-width: 576px) {
+        .gallery-slot {
+            margin: 0 auto 15px auto;
+        }
+    }
+</style>
 {% endblock %}

@@ -1,65 +1,128 @@
 {% extends "base.html" %}
 {% block content %}
+<div class="container my-4" style="max-width: 600px;">
 
-<h2>Seller Profile</h2>
+    <!-- Back/Home Icon -->
+    <div class="mb-3">
+        <a href="{{ url_for('seller_dashboard') if editable else url_for('index') }}" 
+           class="text-decoration-none text-dark">
+            <i class="fas fa-arrow-left me-2"></i> {{ 'Home' if editable else 'Back' }}
+        </a>
+    </div>
 
-<form method="POST" enctype="multipart/form-data">
-    {{ form.hidden_tag() }}
+    <h2 class="text-center mb-4">Seller Profile</h2>
 
-    <!-- Shop Logo -->
-    <label>{{ form.shop_logo.label }}</label><br>
-    {{ form.shop_logo }}<br><br>
+    {% if editable %}
+    <form method="POST" enctype="multipart/form-data">
+        {{ form.hidden_tag() }}
 
-    {% if profile.shop_logo %}
-        <p>Current Logo:</p>
-        <img src="{{ url_for('static', filename='uploads/' ~ profile.shop_logo) }}" width="120"><br>
-        <a href="{{ url_for('delete_logo', seller_id=profile.id) }}" class="btn btn-danger">Delete Logo</a><br><br>
-    {% endif %}
-
-    <!-- Shop Details -->
-    <label>{{ form.shop_name.label }}</label><br>
-    {{ form.shop_name }}<br><br>
-
-    <label>{{ form.about.label }}</label><br>
-    {{ form.about }}<br><br>
-
-    <label>{{ form.phone_number.label }}</label><br>
-    {{ form.phone_number }}<br>
-    {% for error in form.phone_number.errors %}
-        <span style="color:red;">{{ error }}</span><br>
-    {% endfor %}
-    <br>
-
-    <label>{{ form.location.label }}</label><br>
-    {{ form.location }}<br><br>
-
-    <label>{{ form.open_hours.label }}</label><br>
-    {{ form.open_hours }}<br><br>
-
-    <!-- Gallery Images -->
-    <h3>Gallery Images (4 slots)</h3>
-    {% for field in gallery_fields %}
-        <label>{{ field.label }}</label><br>
-        {{ field }}<br><br>
-    {% endfor %}
-
-    {{ form.submit }}
-</form>
-
-<!-- Existing Gallery Images -->
-{% if gallery_images %}
-<h3>Existing Gallery Images</h3>
-<div style="display:flex; flex-wrap:wrap; gap:10px;">
-    {% for img in gallery_images %}
-        <div style="text-align:center;">
-            <img src="{{ url_for('static', filename='uploads/' ~ img.image_url) }}" width="120"><br>
-            <form action="{{ url_for('delete_gallery_image', image_id=img.id) }}" method="POST">
-                {{ form.hidden_tag() }}
-                <button type="submit">Delete</button>
-            </form>
+        <!-- Shop Logo as Clickable Profile Icon -->
+        <div class="text-center mb-4 position-relative">
+            <label for="shop_logo_input" class="cursor-pointer d-inline-block position-relative">
+                {% if profile.shop_logo %}
+                    <img src="{{ url_for('static', filename='uploads/' ~ profile.shop_logo) }}" 
+                         class="rounded-circle border" width="120" height="120">
+                {% else %}
+                    <i class="fas fa-circle-user fa-6x text-secondary"></i>
+                {% endif %}
+                <div class="position-absolute bottom-0 end-0 bg-primary rounded-circle p-2">
+                    <i class="fas fa-camera text-white"></i>
+                </div>
+            </label>
+            <input type="file" id="shop_logo_input" name="shop_logo" style="display:none;">
         </div>
-    {% endfor %}
-</div>
-{% endif %}
 
+        <!-- Shop Details -->
+        <div class="mb-3">
+            <label>{{ form.shop_name.label }}</label>
+            {{ form.shop_name(class="form-control") }}
+        </div>
+
+        <div class="mb-3">
+            <label>{{ form.about.label }}</label>
+            {{ form.about(class="form-control", rows="3") }}
+        </div>
+
+        <div class="mb-3">
+            <label>{{ form.phone_number.label }}</label>
+            {{ form.phone_number(class="form-control") }}
+            {% for error in form.phone_number.errors %}
+                <div class="text-danger">{{ error }}</div>
+            {% endfor %}
+        </div>
+
+        <div class="mb-3">
+            <label>{{ form.location.label }}</label>
+            {{ form.location(class="form-control") }}
+        </div>
+
+        <div class="mb-3">
+            <label>{{ form.open_hours.label }}</label>
+            {{ form.open_hours(class="form-control") }}
+        </div>
+
+        <!-- Shop Gallery -->
+        <h4 class="mt-4 mb-3 text-center">Shop Gallery</h4>
+        <div class="d-flex gap-3 flex-wrap justify-content-center mb-3">
+            {% for field in gallery_fields %}
+                {% set idx = loop.index0 %}
+                <label for="{{ field.id }}" class="gallery-slot cursor-pointer text-center">
+                    <div class="border rounded d-flex align-items-center justify-content-center"
+                        style="width:120px; height:120px; overflow:hidden;">
+                        {% if gallery_images and gallery_images[idx] %}
+                            <img src="{{ url_for('static', filename='uploads/' ~ gallery_images[idx].image_url) }}"
+                                style="width:100%; height:100%; object-fit:cover;">
+                        {% else %}
+                            <i class="fas fa-image fa-3x text-secondary"></i>
+                        {% endif %}
+                    </div>
+                    {{ field(id=field.id, style="display:none;") }}
+                </label>
+            {% endfor %}
+        </div>
+
+        <div class="text-center">
+            {{ form.submit(class="btn btn-primary") }}
+        </div>
+    </form>
+    {% else %}
+    <!-- Read-only view for buyers -->
+    <div class="text-center mb-4">
+        {% if profile.shop_logo %}
+            <img src="{{ url_for('static', filename='uploads/' ~ profile.shop_logo) }}" 
+                 class="rounded-circle border" width="120" height="120">
+        {% else %}
+            <i class="fas fa-circle-user fa-6x text-secondary"></i>
+        {% endif %}
+    </div>
+
+    <div class="mb-3"><strong>Shop Name:</strong> {{ profile.shop_name }}</div>
+    <div class="mb-3"><strong>About:</strong> {{ profile.about }}</div>
+    <div class="mb-3"><strong>Phone:</strong> {{ profile.phone_number }}</div>
+    <div class="mb-3"><strong>Location:</strong> {{ profile.location }}</div>
+    <div class="mb-3"><strong>Open Hours:</strong> {{ profile.open_hours }}</div>
+
+    <h4 class="mt-4 mb-3 text-center">Shop Gallery</h4>
+    <div class="d-flex gap-3 flex-wrap justify-content-center mb-3">
+        {% for img in gallery_images %}
+            <div class="border rounded d-flex align-items-center justify-content-center"
+                 style="width:120px; height:120px; overflow:hidden;">
+                <img src="{{ url_for('static', filename='uploads/' ~ img.image_url) }}"
+                     style="width:100%; height:100%; object-fit:cover;">
+            </div>
+        {% endfor %}
+        {% if not gallery_images %}
+            <div class="text-muted">No images yet.</div>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+
+<style>
+    .cursor-pointer { cursor: pointer; }
+
+    @media (max-width: 576px) {
+        .gallery-slot { margin: 0 auto 15px auto; }
+    }
+</style>
 {% endblock %}

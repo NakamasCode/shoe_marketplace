@@ -1,44 +1,77 @@
 {% extends "base.html" %}
 
-{% block content %}
-    <div class="log">
-        <h1>Sign Up</h1>
-        <form action="" method="post" novalidate>
-            {{ form.hidden_tag() }}
-            <p>
-                {{ form.email.label }}<br>
-                {{ form.email(size=32) }}
-                 {% for error in form.email.errors %}
-                <span style="color: red;">[{{ error }}]</span>
-                {% endfor %}
-            </p>
-            <p>
-                {{ form.username.label }}<br>
-                {{ form.username(size=32) }}
-                 {% for error in form.username.errors %}
-                <span style="color: red;">[{{ error }}]</span>
-                {% endfor %}
-            </p>
-             <p>
-                {{ form.password.label }}<br>
-                {{ form.password(size=32) }}
-                 {% for error in form.password.errors %}
-                <span style="color: red;">[{{ error }}]</span>
-                {% endfor %}
-            </p>
-            <p>
-                {{ form.password2.label }}<br>
-                {{ form.password2(size=32) }}<br>
-                {% for error in form.password2.errors %}
-                <span style="color: red;">[{{ error }}]</span>
-                {% endfor %}
-            </p>
-             <p>
-                {{ form.role.label}}<br>
-                {{ form.role() }}
-            </p>
+{% block title %}Register - Afrido{% endblock %}
 
-            <p>{{ form.submit() }}</p>
-        </form>
-    </div>
+{% block content %}
+<div class="log container min-vh-100 d-flex flex-column justify-content-center align-items-center">
+
+    <h1 class="mb-4">Sign Up</h1>
+
+    <!-- Flash Alerts -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="mb-3 w-100" style="max-width: 400px;">
+          {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show py-2 px-3 small" role="alert">
+              {{ message }}
+              <button type="button" class="btn-close btn-sm" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <form action="" method="post" novalidate class="w-100" style="max-width: 400px;">
+        {{ form.hidden_tag() }}
+
+        <p>
+            {{ form.email.label }}<br>
+            {{ form.email(class="form-control", size=32) }}
+            {% for error in form.email.errors %}
+            <span class="text-danger small">[{{ error }}]</span>
+            {% endfor %}
+        </p>
+
+        <p>
+            {{ form.username.label }}<br>
+            {{ form.username(class="form-control", size=32) }}
+            {% for error in form.username.errors %}
+            <span class="text-danger small">[{{ error }}]</span>
+            {% endfor %}
+        </p>
+
+        <p>
+            {{ form.password.label }}<br>
+            {{ form.password(class="form-control", size=32) }}
+            {% for error in form.password.errors %}
+            <span class="text-danger small">[{{ error }}]</span>
+            {% endfor %}
+        </p>
+
+        <p>
+            {{ form.password2.label }}<br>
+            {{ form.password2(class="form-control", size=32) }}
+            {% for error in form.password2.errors %}
+            <span class="text-danger small">[{{ error }}]</span>
+            {% endfor %}
+        </p>
+
+        <p>
+            {{ form.role.label }}<br>
+            {% for subfield in form.role %}
+                <div class="form-check form-check-inline">
+                    {{ subfield(class="form-check-input") }}
+                    {{ subfield.label(class="form-check-label") }}
+                </div>
+            {% endfor %}
+        </p>
+
+
+        <p>{{ form.submit(class="btn btn-primary w-100") }}</p>
+
+        <p class="text-center mt-3">
+            Already have an account? <a href="{{ url_for('login') }}">Login</a>
+        </p>
+    </form>
+</div>
 {% endblock %}

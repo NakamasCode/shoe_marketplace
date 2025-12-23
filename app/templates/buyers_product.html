@@ -1,30 +1,99 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div style="max-width: 1000px; margin: 30px auto;">
 
-    <h1>{{ seller.username }}'s Products</h1>
 
-    <div style="display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; margin-top:20px;">
+<div class="container my-5">
+
+    <!-- Back button -->
+    <div class="mb-3">
+        <a href="{{ url_for('index') }}" class="btn btn-outline-secondary btn-sm">
+            ← Back
+        </a>
+    </div>
+
+    <!-- Catchy Heading -->
+    <h2 class="text-center fw-bold mb-4">
+        Check out {{ products|length }} awesome product{{ products|length != 1 and 's' or '' }}
+        from {{ seller.username }}!
+    </h2>
+
+    <div class="row justify-content-center g-3">
+
         {% for product in products %}
             {% set images = product.images.all() if product.images.__class__.__name__ == 'AppenderQuery' else product.images %}
-            <div style="border: 1px solid #ddd; padding:10px; width:220px; border-radius:8px;">
-                <h3>{{ product.name }}</h3>
-                <p>Price: ₦{{ "{:,.2f}".format(product.price) }}</p>
-                <p>Stock: {{ product.stock_quantity }}</p>
-                
-                {% if images|length > 0 %}
-                    <img src="{{ url_for('static', filename='uploads/' ~ images[0].image_url) }}" 
-                         style="width:100%; height:150px; object-fit:cover;">
-                {% else %}
-                    <div style="width:100%; height:150px; background-color:#eee; display:flex; align-items:center; justify-content:center;">
-                        No Image
+
+            <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+                <div class="card product-card h-100"
+                     onclick="location.href='{{ url_for('product_detail', product_id=product.id) }}'">
+
+                    {% if images|length > 0 %}
+                        <img src="{{ url_for('static', filename='uploads/' ~ images[0].image_url) }}"
+                             class="card-img-top"
+                             style="height:180px; object-fit:cover;">
+                    {% else %}
+                        <div class="d-flex align-items-center justify-content-center bg-light"
+                             style="height:180px;">
+                            No Image
+                        </div>
+                    {% endif %}
+
+                    <div class="card-body text-center">
+
+                        <h6 class="card-title mb-2">{{ product.name }}</h6>
+
+                        <!-- DEFAULT TEXT -->
+                        <div class="card-text-default">
+                            <p class="mb-1 fw-semibold">
+                                ₦{{ "{:,.2f}".format(product.price) }}
+                            </p>
+                            <small class="text-muted">
+                                Stock: {{ product.stock_quantity }}
+                            </small>
+                        </div>
+
+                        <!-- HOVER ACTION -->
+                        <div class="card-text-hover">
+                            <button class="btn btn-primary w-100"
+                                    onclick="event.stopPropagation();">
+                                Add to cart
+                            </button>
+                        </div>
+
                     </div>
-                {% endif %}
+                </div>
             </div>
+
         {% else %}
-            <p>No products from this seller yet.</p>
+            <p class="text-center">No products from this seller yet.</p>
         {% endfor %}
+
     </div>
 </div>
+
+<style>
+/* hide hover action by default */
+.card-text-hover {
+    display: none;
+}
+
+/* swap ONLY the text area */
+.product-card:hover .card-text-default {
+    display: none;
+}
+
+.product-card:hover .card-text-hover {
+    display: block;
+}
+
+/* subtle polish */
+.product-card {
+    cursor: pointer;
+    transition: transform 0.15s ease;
+}
+
+.product-card:hover {
+    transform: translateY(-2px);
+}
+</style>
 {% endblock %}

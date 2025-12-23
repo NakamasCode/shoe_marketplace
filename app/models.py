@@ -1,7 +1,9 @@
-from app import db, login
+from app import app,db, login
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin
+from itsdangerous import URLSafeTimedSerializer
+
 
 
 # ----------------------
@@ -25,9 +27,38 @@ class User(UserMixin, db.Model):
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
 
+    def get_reset_password_token(self, expires_in=600):
+        """Generate a timed token for password reset (default 10 min)."""
+        s = URLSafeTimedSerializer(app.config['SECRET_KEY'])
+        return s.dumps({'user_id': self.id})
+
+    @staticmethod
+    def verify_reset_password_token(token):
+        """Verify token and return the user if valid."""
+        s = URLSafeTimedSerializer(app.config['SECRET_KEY'])
+        try:
+            data = s.loads(token, max_age=600)  # token valid for 10 min
+        except:
+            return None
+        return User.query.get(data['user_id'])
+
     def __repr__(self):
         return f'<User {self.username} | Role: {self.role}>'
 
+
+class BuyerProfile(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), unique=True, nullable=False)
+
+    full_name = db.Column(db.String(120))
+    email = db.Column(db.String(120))
+    billing_address = db.Column(db.String(250))
+    payment_method = db.Column(db.String(50))
+    profile_image = db.Column(db.String(200))  # new column
+    user = db.relationship('User', backref='buyer_profile', uselist=False)
+
+    def __repr__(self):
+        return f'<BuyerProfile {self.full_name or self.user.username}>'
 
 # ----------------------
 # SELLER PROFILE
@@ -113,6 +144,25 @@ class ProductImage(db.Model):
     product_id = db.Column(db.Integer, db.ForeignKey('product.id'))
     image_url = db.Column(db.String(200))
     description = db.Column(db.String(200))
+
+
+
+class Message(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    
+    sender_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    receiver_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    
+    product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=True)  # Optional, link message to product
+    
+    content = db.Column(db.Text, nullable=False)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    sender = db.relationship('User', foreign_keys=[sender_id], backref='sent_messages')
+    receiver = db.relationship('User', foreign_keys=[receiver_id], backref='received_messages')
+    product = db.relationship('Product', backref='messages')
+
 
 
 # ----------------------

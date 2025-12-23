@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, BooleanField, SubmitField, SelectField, TextAreaField, FloatField, IntegerField
-from wtforms.validators import DataRequired, Email, ValidationError, EqualTo, Length, NumberRange, Regexp
+from wtforms import StringField, PasswordField, BooleanField, SubmitField,SelectField, RadioField, TextAreaField, FloatField, IntegerField
+from wtforms.validators import DataRequired, Email, ValidationError, Optional,EqualTo, Length, NumberRange, Regexp
 from app.models import User
 from flask_wtf.file import FileField, FileAllowed, MultipleFileField
 
@@ -17,7 +17,7 @@ class RegisterForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired(), Email()])
     password = PasswordField('Password', validators=[DataRequired(), Length(min=6)])
     password2 = PasswordField('Repeat Password', validators=[DataRequired(), EqualTo('password')])
-    role = SelectField('Role', choices=[('buyer', 'Buyer'), ('seller', 'Seller')], validators=[DataRequired()])
+    role = RadioField('Role Selection', choices=[('buyer', 'Buyer'), ('seller', 'Seller')], default='seller', validators=[DataRequired()])
     submit = SubmitField('Sign Up')
     
     def validate_username(self, username):
@@ -31,6 +31,32 @@ class RegisterForm(FlaskForm):
             raise ValidationError('Please use a different email address.')
 
 
+
+class BuyerProfileForm(FlaskForm):
+    full_name = StringField(
+        'Full Name',
+        validators=[DataRequired(), Length(max=120)]
+    )
+    email = StringField(
+        'Email',
+        validators=[DataRequired(), Email(), Length(max=120)]
+    )
+    billing_address = StringField(
+        'Billing Address',
+        validators=[Optional(), Length(max=250)]
+    )
+    payment_method = SelectField(
+        'Payment Method',
+        choices=[('None', 'None'), ('Card', 'Card'), ('Bank Transfer', 'Bank Transfer'), ('Cash', 'Cash')],
+        default='None'
+    )
+    profile_image = FileField(
+        'Profile Image (optional)'
+    )
+    submit = SubmitField('Save Changes')
+    
+    
+    
 class SellerProfileForm(FlaskForm):
     shop_name = StringField('Shop Name', validators=[DataRequired()])
     about = TextAreaField('About your shop', validators=[Length(max=200)])
@@ -76,3 +102,26 @@ class ProductForm(FlaskForm):
 
 class DeleteForm(FlaskForm):
     submit = SubmitField('Delete')
+    
+    
+
+class MessageForm(FlaskForm):
+    content = TextAreaField('Message', validators=[DataRequired(), Length(max=1000)])
+    submit = SubmitField('Send')
+
+
+
+
+class ForgotPasswordForm(FlaskForm):
+    email = StringField('Email', validators=[DataRequired(), Email()])
+    submit = SubmitField('Send Reset Link')
+
+
+
+class ResetPasswordForm(FlaskForm):
+    password = PasswordField('New Password', validators=[DataRequired(), Length(min=6)])
+    password2 = PasswordField(
+        'Confirm New Password',
+        validators=[DataRequired(), EqualTo('password', message="Passwords must match")]
+    )
+    submit = SubmitField('Reset Password')

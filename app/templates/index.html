@@ -1,21 +1,40 @@
 {% extends "base.html" %}
 
-{% block content%}
-    <h1>Welcome to Shoemarket</h1>
-    <p>Find soles, leathers, and adhesives from trusted vendors.</p>
+{% block content %}
+<div class="container text-center d-flex flex-column" style="min-height: 100vh;">
 
-    <div>
-        <a href="{{ url_for('login')}}">
-            <button>Login</button>
-        </a>
-        
-        <a href="{{ url_for('register')}}">
-            <button>Sign Up</button>
-        </a>    
+    <!-- Top Section: App Name -->
+    <div class="mt-5 mb-5">
+        <h1 class="fw-bold display-1">
+            Afrido
+        </h1>
     </div>
-    
-    <p class="tag">
-        Connecting shoemakers to local vendors easily.
-    </p>
-{% endblock %}
 
+    <!-- Middle Section: Description + CTA centered vertically -->
+    <div class="flex-grow-1 d-flex flex-column justify-content-center">
+        <p class="lead text-muted mx-auto mb-4" style="max-width: 600px;">
+            Add, create, and manage your craft products in one place.
+            Afrido helps craft people showcase their work, connect directly
+            with buyers, and grow their business — simply and locally.
+        </p>
+
+        <!-- Buttons -->
+        <div class="d-grid gap-3 d-sm-flex justify-content-sm-center mb-3">
+            <a href="{{ url_for('login') }}" class="btn btn-primary btn-lg px-5">
+                Login
+            </a>
+            <a href="{{ url_for('register') }}" class="btn btn-outline-primary btn-lg px-5">
+                Sign Up
+            </a>
+        </div>
+    </div>
+
+    <!-- Footer Section -->
+    <div class="mb-5">
+        <p class="text-muted small mt-2">
+            Built for craft people.
+        </p>
+    </div>
+
+</div>
+{% endblock %}

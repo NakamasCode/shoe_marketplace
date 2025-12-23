@@ -1,15 +1,19 @@
-from flask import render_template, url_for, redirect, flash, request
-from app import app, db
-from app.forms import LoginForm, RegisterForm, SellerProfileForm, ProductForm, CategoryForm, DeleteForm
+from flask import render_template, url_for, redirect, flash, request, session
+from app import  app,db
+from app.forms import ForgotPasswordForm,BuyerProfileForm,ResetPasswordForm,LoginForm, RegisterForm, SellerProfileForm, ProductForm, CategoryForm, DeleteForm, MessageForm
 from flask_login import current_user, login_user, logout_user, login_required
-from app.models import User, SellerProfile,SellerImage, Category, Product, ProductImage,SellerImage
+from app.models import User, SellerProfile,BuyerProfile,SellerImage, Category, Product, ProductImage,SellerImage, Message
 import os
+
+from sqlalchemy import func
 from urllib.parse import urlparse
-from datetime import datetime
+from datetime import datetime, timedelta
 from werkzeug.utils import secure_filename
 
 
 # ------------------------- PUBLIC ROUTES -------------------------
+
+
 
 @app.route('/')
 @app.route('/index')
@@ -89,11 +93,13 @@ def seller_dashboard():
     # Fetch seller's products and categories for dashboard
     products = Product.query.filter_by(seller_id=current_user.id).all()
     categories = Category.query.filter_by(seller_id=current_user.id).all()
+    category_form = CategoryForm()
+    category_form.parent_id.choices = [(0, 'No parent')] + [(c.id, c.name) for c in categories]
     form = CategoryForm()
     
     form.parent_id.choices = [(0, 'No parent')] + [(c.id, c.name) for c in categories]
     
-    return render_template('seller_dashboard.html', title='Dashboard', products=products, categories=categories, form=form)
+    return render_template('seller_dashboard.html', title='Dashboard', products=products, category_form=category_form,categories=categories, form=form)
 
 
 # @app.route('/buyer/dashboard')
@@ -137,67 +143,64 @@ def view_seller(id):
 
 
 # ------------------------- SELLER PROFILE -------------------------
-
-@app.route('/seller/profile', methods=['GET', 'POST'])
+@app.route('/seller/profile', defaults={'user_id': None}, methods=['GET', 'POST'])
+@app.route('/seller/profile/<int:user_id>', methods=['GET'])
 @login_required
-def seller_profile():
-    if current_user.role != 'seller':
+def seller_profile(user_id):
+    # If no user_id, assume current user (for editing)
+    if user_id is None:
+        if current_user.role != 'seller':
+            flash('Access Denied!', 'danger')
+            return redirect(url_for('index'))
+        profile_user = current_user
+        editable = True
+    else:
+        profile_user = User.query.get_or_404(user_id)
+        editable = False  # Buyers or other users cannot edit
+
+    if profile_user.role != 'seller':
         flash('Access Denied!', 'danger')
         return redirect(url_for('index'))
 
-    profile = current_user.seller_profile
-    form = SellerProfileForm()
+    profile = profile_user.seller_profile
 
-    # Pre-fill form
-    if request.method == 'GET' and profile:
-        form.shop_name.data = profile.shop_name
-        form.about.data = profile.about
-        form.phone_number.data = profile.phone_number
-        form.location.data = profile.location
-        form.open_hours.data = profile.open_hours
+    if editable:
+        form = SellerProfileForm()
 
-    if form.validate_on_submit():
-        profile.shop_name = form.shop_name.data
-        profile.about = form.about.data
-        profile.phone_number = form.phone_number.data
-        profile.location = form.location.data
-        profile.open_hours = form.open_hours.data
+        # Pre-fill form
+        if request.method == 'GET' and profile:
+            form.shop_name.data = profile.shop_name
+            form.about.data = profile.about
+            form.phone_number.data = profile.phone_number
+            form.location.data = profile.location
+            form.open_hours.data = profile.open_hours
 
-        # Update logo
-        if form.shop_logo.data:
-            file = form.shop_logo.data
-            filename = secure_filename(file.filename)
-            filepath = os.path.join(app.root_path, 'static/uploads', filename)
-            file.save(filepath)
-            profile.shop_logo = filename
+        if form.validate_on_submit():
+            profile.shop_name = form.shop_name.data
+            profile.about = form.about.data
+            profile.phone_number = form.phone_number.data
+            profile.location = form.location.data
+            profile.open_hours = form.open_hours.data
+            # handle logo and gallery upload...
+            db.session.commit()
+            flash('Profile updated successfully!', 'success')
+            return redirect(url_for('seller_profile'))
 
-        # Add gallery images
-        for field in [form.gallery_image1, form.gallery_image2, form.gallery_image3, form.gallery_image4]:
-            if field.data:
-                file = field.data
-                filename = secure_filename(file.filename)
-                filepath = os.path.join(app.root_path, 'static/uploads', filename)
-                file.save(filepath)
-                gallery_image = SellerImage(seller_profile_id=profile.id, image_url=filename)
-                db.session.add(gallery_image)
+        gallery_images = profile.images.all() if profile else []
+        gallery_fields = [form.gallery_image1, form.gallery_image2, form.gallery_image3, form.gallery_image4]
 
-        profile.user.last_seen = datetime.utcnow()
-        db.session.commit()
-        flash('Profile updated successfully!', 'success')
-        return redirect(url_for('seller_profile'))
+        return render_template('seller_profile.html',
+                               profile=profile,
+                               form=form,
+                               gallery_fields=gallery_fields,
+                               gallery_images=gallery_images,
+                               editable=True)
 
-    # Fetch existing gallery images
-    gallery_images = profile.images.all() if profile else []
-
-    # Prepare gallery fields for template loop
-    gallery_fields = [form.gallery_image1, form.gallery_image2, form.gallery_image3, form.gallery_image4]
-
-    return render_template('seller_profile.html',
-                           title='Seller Profile',
-                           form=form,
-                           gallery_fields=gallery_fields,
-                           gallery_images=gallery_images,
-                           profile=profile)
+    else:
+        # Read-only view for buyers
+        return render_template('seller_profile.html',
+                               profile=profile,
+                               editable=False)
 
 
 
@@ -279,6 +282,32 @@ def quick_add_category():
 
     return redirect(url_for('seller_dashboard'))
 
+@app.route('/seller/category/<int:id>/edit', methods=['GET', 'POST'])
+@login_required
+def edit_category(id):
+    category = Category.query.get_or_404(id)
+
+    if category.seller_id != current_user.id:
+        flash("Access denied.", "danger")
+        return redirect(url_for('seller_dashboard'))
+
+    form = CategoryForm(obj=category)
+
+    form.parent_id.choices = [
+        (0, "None")
+    ] + [(c.id, c.name) for c in Category.query.filter_by(seller_id=current_user.id)]
+
+    if form.validate_on_submit():
+        category.name = form.name.data
+        category.parent_id = form.parent_id.data or None
+        db.session.commit()
+        flash("Category updated!", "success")
+        return redirect(url_for('seller_dashboard'))
+
+    return render_template('edit_category.html', form=form)
+
+
+
 @app.route('/seller/category/<int:id>/delete', methods=['POST'])
 @login_required
 def delete_category(id):
@@ -288,10 +317,30 @@ def delete_category(id):
         flash("Access denied.", "danger")
         return redirect(url_for('seller_dashboard'))
 
+    # Get or create "Uncategorized"
+    uncategorized = Category.query.filter_by(
+        seller_id=current_user.id,
+        name="Uncategorized"
+    ).first()
+
+    if not uncategorized:
+        uncategorized = Category(
+            name="Uncategorized",
+            seller_id=current_user.id
+        )
+        db.session.add(uncategorized)
+        db.session.commit()
+
+    # Move products to Uncategorized
+    for product in category.products:
+        product.category_id = uncategorized.id
+
     db.session.delete(category)
     db.session.commit()
-    flash("Category deleted!", "success")
+
+    flash("Category deleted. Products moved to Uncategorized.", "success")
     return redirect(url_for('seller_dashboard'))
+
 
 
 @app.route('/seller/product/add', methods=['GET', 'POST'])
@@ -302,6 +351,7 @@ def add_product():
         return redirect(url_for('index'))
 
     form = ProductForm()
+   
 
     # Load categories for this seller
     categories = Category.query.filter_by(seller_id=current_user.id).all()
@@ -366,17 +416,6 @@ def add_product():
         product_image_fields=product_image_fields
     )
 
-
-@app.route('/seller/product/<int:product_id>')
-@login_required
-def product_detail(product_id):
-    product = Product.query.get_or_404(product_id)
-
-    if product.seller_id != current_user.id:
-        flash("Access denied.", "danger")
-        return redirect(url_for('seller_dashboard'))
-
-    return render_template('product_detail.html', product=product)
 
 
 @app.route('/seller/product/<int:id>/edit', methods=['GET', 'POST'])
@@ -503,10 +542,76 @@ def delete_product_image(id):
 @app.route('/buyers/sellers')
 @login_required
 def select_seller():
-    sellers = User.query.filter_by(role="seller").join(Product).filter(Product.stock_quantity > 0).all()
+    # Get sellers who have products in stock along with their profile (if exists)
+    sellers = (
+        db.session.query(User, SellerProfile)
+        .join(Product, Product.seller_id == User.id)
+        .outerjoin(SellerProfile, SellerProfile.user_id == User.id)
+        .filter(User.role == "seller")
+        .filter(Product.stock_quantity > 0)
+        .distinct(User.id)  # avoid duplicates if multiple products
+        .all()
+    )
     return render_template('buyers_sellers.html', sellers=sellers)
+
+@app.route('/buyer/profile', methods=['GET', 'POST'])
+@login_required
+def buyer_profile():
+    if current_user.role != 'buyer':
+        flash("Access denied!", "danger")
+        return redirect(url_for('index'))
+
+    # Get or create the profile
+    profile = BuyerProfile.query.filter_by(user_id=current_user.id).first()
+    if not profile:
+        profile = BuyerProfile(user_id=current_user.id)
+        db.session.add(profile)
+        db.session.commit()
+
+    form = BuyerProfileForm(obj=profile)
+
+    # Pre-fill form (optional, already handled by WTForms obj=profile)
+    if request.method == 'GET' and profile:
+        form.full_name.data = profile.full_name
+        form.email.data = profile.email
+        form.billing_address.data = profile.billing_address
+        form.payment_method.data = profile.payment_method
+
+    if form.validate_on_submit():
+        profile.full_name = form.full_name.data
+        profile.email = form.email.data
+        profile.billing_address = form.billing_address.data
+        profile.payment_method = form.payment_method.data
+
+        # Handle profile image upload
+        if form.profile_image.data:
+            file = form.profile_image.data
+            filename = secure_filename(file.filename)
+            filepath = os.path.join(app.root_path, 'static/uploads', filename)
+            file.save(filepath)
+            profile.profile_image = filename
+
+        profile.user.last_seen = datetime.utcnow()
+        db.session.commit()
+        flash("Profile updated successfully!", "success")
+        return redirect(url_for('buyer_profile'))
+
+    return render_template('buyer_profile.html', form=form, profile=profile)
+
     
     
+@app.route('/cart')
+@login_required
+def view_cart():
+    # Demo page for now
+    return "<h1>Cart Page (Demo)</h1>"
+
+
+@app.route('/payment-method')
+@login_required
+def payment_method():
+    return "<h1>Payment Method Page (Demo)</h1>"
+
     
 @app.route('/buyers/seller/<int:seller_id>/products')
 def view_seller_products(seller_id):
@@ -514,3 +619,154 @@ def view_seller_products(seller_id):
     products = Product.query.filter_by(seller_id=seller_id).all()
     categories = Category.query.filter_by(seller_id=seller_id).all()
     return render_template('buyers_product.html', seller=seller, products=products, categories= categories)
+
+
+@app.route('/product/<int:product_id>')
+def product_detail(product_id):
+    product = Product.query.get_or_404(product_id)
+    seller = User.query.get(product.seller_id)
+    images = product.images.all()
+
+    is_seller_view = (
+        current_user.is_authenticated and 
+        current_user.id == product.seller_id
+    )
+
+    return render_template(
+        'product_detail.html',
+        product=product,
+        seller=seller,
+        images=images,
+        is_seller_view=is_seller_view
+    )
+
+
+@app.route('/product/<int:product_id>/message', methods=['GET', 'POST'])
+@login_required
+def message_seller(product_id):
+    product = Product.query.get_or_404(product_id)
+
+    # Only buyers can send messages
+    if current_user.role != 'buyer':
+        flash("Only buyers can send messages to sellers.", "danger")
+        return redirect(url_for('product_detail', product_id=product.id))
+
+    seller = User.query.get_or_404(product.seller_id)
+    form = MessageForm()
+
+    if form.validate_on_submit():
+        # Create and save the message
+        msg = Message(
+            sender_id=current_user.id,
+            receiver_id=seller.id,
+            product_id=product.id,
+            content=form.content.data
+        )
+        db.session.add(msg)
+        db.session.commit()
+        flash("Message sent to seller!", "success")
+        return redirect(url_for('product_detail', product_id=product.id))
+
+    return render_template('message_form.html', form=form, product=product, seller=seller)
+
+@app.route('/inbox')
+@login_required
+def inbox():
+    products_info = []
+
+    if current_user.role == 'seller':
+        # Seller view
+        products = Product.query.filter_by(seller_id=current_user.id).all()
+        for product in products:
+            messages = Message.query.filter_by(product_id=product.id).order_by(Message.timestamp.desc()).all()
+            buyers_dict = {}
+            for msg in messages:
+                if not msg.product or msg.sender_id == current_user.id:
+                    continue
+                buyer_id = msg.sender_id
+                if buyer_id not in buyers_dict:
+                    buyers_dict[buyer_id] = {
+                        "id": buyer_id,
+                        "username": msg.sender.username,
+                        "message_count": 0
+                    }
+                buyers_dict[buyer_id]["message_count"] += 1
+
+            buyers = list(buyers_dict.values())
+            new_messages_count = Message.query.filter(
+                Message.product_id == product.id,
+                Message.sender_id != current_user.id,
+                Message.timestamp > datetime.utcnow() - timedelta(days=1)
+            ).count()
+
+            products_info.append({
+                "product": product,
+                "buyers": buyers,
+                "new_messages_count": new_messages_count
+            })
+
+    else:
+        # Buyer view
+        # Get products buyer has messaged
+        messages = Message.query.filter(
+            (Message.sender_id == current_user.id) |
+            (Message.receiver_id == current_user.id)  # assuming you track receiver_id
+        ).order_by(Message.timestamp.desc()).all()
+
+        products_dict = {}
+        for msg in messages:
+            if not msg.product:
+                continue
+            pid = msg.product.id
+            if pid not in products_dict:
+                products_dict[pid] = {
+                    "product": msg.product,
+                    "last_message": msg.content,
+                    "timestamp": msg.timestamp
+                }
+        # convert to list
+        products_info = list(products_dict.values())
+
+    return render_template('inbox.html', products_info=products_info)
+
+
+@app.route('/messages/<int:product_id>/<int:user_id>', methods=['GET', 'POST'])
+@login_required
+def conversation(product_id, user_id):
+    product = Product.query.get_or_404(product_id)
+    other_user = User.query.get_or_404(user_id)
+
+    form = MessageForm()
+    if form.validate_on_submit():
+        msg = Message(
+            sender_id=current_user.id,
+            receiver_id=other_user.id,
+            product_id=product.id,
+            content=form.content.data
+        )
+        db.session.add(msg)
+        db.session.commit()
+        return redirect(url_for('conversation', product_id=product.id, user_id=other_user.id))
+
+    # Fetch conversation messages
+    msgs = Message.query.filter(
+        ((Message.sender_id==current_user.id) & (Message.receiver_id==other_user.id)) |
+        ((Message.sender_id==other_user.id) & (Message.receiver_id==current_user.id))
+    ).filter_by(product_id=product.id).order_by(Message.timestamp).all()
+
+    return render_template('conversation.html', messages=msgs, form=form, product=product, other_user=other_user)
+
+
+
+@app.route('/forgot-password')
+def forgot_password():
+    form = ForgotPasswordForm()
+    return render_template('forgot_password.html', title='Forgot Password', form=form)
+
+# -------------------------
+# RESET PASSWORD PAGE
+# -------------------------
+@app.route('/reset-password')
+def reset_password():
+    form = ResetPasswordForm()
+    return render_template('reset_password.html', title='Reset Password', form=form)

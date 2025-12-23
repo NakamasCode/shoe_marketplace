@@ -1,89 +1,210 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div style="max-width: 1000px; margin: 30px auto;">
+<div class="container my-4" style="max-width: 1000px;">
 
-    <!-- Dashboard Title -->
-    <h1 style="text-align: center;">Seller Dashboard</h1>
-    <p style="text-align: center;">Welcome, {{ current_user.username }}!</p>
-
-    <!-- Add Category Section -->
-    <div style="margin: 30px 0; padding: 20px; border: 1px solid #ddd;">
-        <h3>Add Category</h3>
-        <form method="POST" action="{{ url_for('quick_add_category') }}">
-            {{ form.hidden_tag() }}
-
-            <div style="margin-bottom: 10px;">
-                {{ form.name.label }}
-                {{ form.name(class="form-control") }}
-            </div>
-
-            <div style="margin-bottom: 10px;">
-                {{ form.parent_id.label }}
-                {{ form.parent_id(class="form-select") }}
-            </div>
-
-            <button type="submit" class="btn btn-primary">Add Category</button>
-        </form>
+    <!-- User Product Info -->
+    <div class="text-center mb-4">
+        <h5>
+            Dear {{ current_user.username }}, you have 
+            <strong>{{ products|length if products else 0 }}</strong> products
+        </h5>
     </div>
 
-    <!-- Category List -->
-    <div style="margin-bottom: 30px;">
-        <h3>Your Categories</h3>
-        {% for cat in categories %}
-        <div style="display:flex; justify-content:space-between; border-bottom:1px solid #eee; padding: 5px;">
-            <span>{{ cat.name }}</span>
+    <!-- Quick Action Cards -->
+    <div class="d-flex flex-wrap justify-content-center gap-4 mb-4">
+        {% set card_size = "80px" %}
 
-            <form method="POST" action="{{ url_for('delete_category', id=cat.id) }}">
-                <button type="submit" style="color:red; border:none; background:none;">Delete</button>
-            </form>
+        <!-- Add Product -->
+        <div class="text-center">
+            <a href="{{ url_for('add_product') }}" class="d-block border rounded p-3 text-dark text-decoration-none" 
+               style="width: {{ card_size }}; height: {{ card_size }};">
+                <i class="fas fa-plus fa-3x"></i>
+            </a>
+            <div class="mt-2">Add Product</div>
         </div>
+
+        <!-- Manage Categories -->
+        <div class="text-center">
+            <a href="#" class="d-block border rounded p-3 text-dark text-decoration-none" 
+            data-bs-toggle="modal" data-bs-target="#manageCategoryModal" 
+            style="width: {{ card_size }}; height: {{ card_size }};">
+                <i class="fas fa-tags fa-3x"></i>
+            </a>
+            <div class="mt-2">Manage Categories</div>
+        </div>
+
+        
+     
+
+        <!-- Messages -->
+
+<!-- Messages -->
+        <div class="text-center">
+            <a href="{{ url_for('inbox') }}" class="d-block border rounded p-3 text-dark text-decoration-none" 
+            style="width: {{ card_size }}; height: {{ card_size }};">
+                <i class="fas fa-envelope fa-3x"></i>   
+            </a>
+            <div class="mt-2">Messages</div>
+        </div>
+
+    </div>
+
+    <!-- Products Horizontal Scroll -->
+    <h5 class="mb-2 fw-bold text-center">Your Products</h5>
+    <div class="d-flex overflow-auto pb-3" style="gap: 1rem;">
+        {% if products|length == 0 %}
+            <div class="border rounded p-4 text-center w-100">
+                <p>No products yet. Click "Add Product" to start selling!</p>
+            </div>
         {% else %}
-            <p>No categories yet</p>
-        {% endfor %}
-    </div>
+            {% for product in products %}
+                {% set images = product.images.all() %}
 
-    <!-- Navigation Buttons: Add Product + Logout -->
-    <div style="text-align: center; margin-bottom: 30px;">
-        <a href="{{ url_for('add_product') }}">
-            <button style="padding: 10px 20px; margin-right: 10px;">Add Product</button>
-        </a>
-        <a href="{{ url_for('logout') }}">
-            <button style="padding: 10px 20px;">Logout</button>
-        </a>
-    </div>
+                <a href="{{ url_for('product_detail', product_id=product.id) }}">
+                    <div class="flex-shrink-0" style="width: 150px;">
+                        <div class="card h-100 shadow-sm border">
 
-    <!-- Products Grid -->
-    <div style="display: flex; flex-wrap: wrap; gap: 20px; justify-content: center;">
-        {% for product in products %}
-            {% set images = product.images.all() if product.images.__class__.__name__ == 'AppenderQuery' else product.images %}
-            <a href="{{ url_for('product_detail', product_id=product.id) }}" style="text-decoration: none; color: inherit;">
-                <div style="border: 1px solid #ddd; border-radius: 8px; width: 220px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.1); transition: transform 0.2s;">
+                            {% if images|length > 0 %}
+                                <a href="{{ url_for('product_detail', product_id=product.id) }}">
+                                    <img src="{{ url_for('static', filename='uploads/' ~ images[0].image_url) }}"
+                                        class="card-img-top"
+                                        style="height: 120px; object-fit: cover;">
+                                </a>
+                            {% else %}
+                                <div class="bg-light d-flex align-items-center justify-content-center"
+                                    style="height:120px;">
+                                    No Image
+                                </div>
+                            {% endif %}
 
-                    <!-- Product Image -->
-                    {% if images|length > 0 %}
-                        <img src="{{ url_for('static', filename='uploads/' ~ images[0].image_url) }}" style="width: 100%; height: 180px; object-fit: cover;">
-                    {% else %}
-                        <div style="width: 100%; height: 180px; background-color: #eee; display: flex; align-items: center; justify-content: center;">
-                            No Image
+                            <div class="card-body p-2">
+                                <h6 class="card-title mb-1">{{ product.name }}</h6>
+                                <p class="mb-1">
+                                    <i class="fas fa-naira-sign"></i>
+                                    {{ "{:,.2f}".format(product.price) }}
+                                </p>
+                                <p class="mb-1">Qty: {{ product.stock_quantity }}</p>
+
+                                <div class="d-flex justify-content-between mt-2">
+                                    <!-- Edit icon -->
+                                    <a href="{{ url_for('edit_product', id=product.id) }}" class="text-dark" style="font-size: 1.5rem;" title="Edit Product">
+                                        <i class="fas fa-pencil-alt"></i>
+                                    </a>
+
+                                    <!-- Delete icon triggers modal -->
+                                    <button class="btn p-0 border-0 text-danger" 
+                                            style="font-size: 1.5rem;" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#deleteProductModal{{ product.id }}" 
+                                            title="Delete Product">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+
                         </div>
-                    {% endif %}
+                    </div>
+               
 
-                    <!-- Product Info -->
-                    <div style="padding: 10px;">
-                        <h3 style="margin: 0; font-size: 1.1em;">{{ product.name }}</h3>
-                        <p style="margin: 5px 0; color: #555;">Price: ₦{{ "{:,.2f}".format(product.price) }}</p>
-                        <p style="margin: 5px 0; color: #555;">Stock: {{ product.stock_quantity }}</p>
-                        {% if product.category %}
-                            <p style="margin: 5px 0; color: #888; font-size: 0.9em;">Category: {{ product.category.name }}</p>
-                        {% endif %}
+                <!-- Delete Confirmation Modal -->
+                <div class="modal fade" id="deleteProductModal{{ product.id }}" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Delete Product</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                Are you sure you want to delete <strong>{{ product.name }}</strong>?
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <form method="POST" action="{{ url_for('delete_product', id=product.id) }}" class="m-0">
+                                    <button type="submit" class="btn btn-danger">Yes, Delete</button>
+                                </form>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </a>
-        {% else %}
-            <p style="text-align: center; width: 100%;">You have no products yet. Click "Add Product" to start selling!</p>
-        {% endfor %}
+            {% endfor %}
+
+
+
+        {% endif %}
     </div>
+
+
+
+    <!-- Manage Categories Modal -->
+    <div class="modal fade" id="manageCategoryModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="manageCategoryTitle">Manage Categories</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+
+                    <!-- Add Category Section -->
+                    <div id="categoryAddSection">
+                        <form method="POST" action="{{ url_for('quick_add_category') }}">
+                            {{ category_form.hidden_tag() }}
+                            <div class="mb-3">
+                                {{ category_form.name.label(class="form-label") }}
+                                {{ category_form.name(class="form-control") }}
+                            </div>
+                            <div class="mb-3">
+                                {{ category_form.parent_id.label(class="form-label") }}
+                                {{ category_form.parent_id(class="form-select") }}
+                            </div>
+                            <button type="submit" class="btn btn-primary">Add Category</button>
+                        </form>
+                    </div>
+
+                    <!-- Edit Category Section -->
+                    <div id="categoryEditSection" style="display:none;">
+                        {% for category in categories %}
+                        <form method="POST" action="{{ url_for('edit_category', id=category.id) }}" class="mb-2">
+                            <input type="text" name="name" value="{{ category.name }}" class="form-control mb-1">
+                            <select name="parent_id" class="form-select mb-1">
+                                <option value="">No parent</option>
+                                {% for c in categories %}
+                                    <option value="{{ c.id }}" {% if c.id == category.parent_id %}selected{% endif %}>{{ c.name }}</option>
+                                {% endfor %}
+                            </select>
+                            <button type="submit" class="btn btn-warning btn-sm">Save</button>
+                        </form>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Delete Category Section -->
+                    <div id="categoryDeleteSection" style="display:none;">
+                        {% for category in categories %}
+                        <form method="POST" action="{{ url_for('delete_category', id=category.id) }}" class="mb-2">
+                            <span>{{ category.name }}</span>
+                            <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                        </form>
+                        {% endfor %}
+                    </div>
+
+                </div>
+                <div class="modal-footer">
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-primary" data-action="add">Add</button>
+                        <button type="button" class="btn btn-warning" data-action="edit">Edit</button>
+                        <button type="button" class="btn btn-danger" data-action="delete">Delete</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+
+
 
 </div>
 {% endblock %}

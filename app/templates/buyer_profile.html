@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container my-4" style="max-width: 600px;">
+
+    <!-- Back button -->
+    <div class="mb-3">
+        <a href="{{ url_for('index') }}" class="btn btn-outline-secondary btn-sm">
+            ← Back
+        </a>
+    </div>
+
+    <h2 class="text-center mb-4">Buyer Profile</h2>
+
+    <form method="POST" enctype="multipart/form-data">
+        {{ form.hidden_tag() }}
+
+        <!-- Profile Image Upload -->
+        <div class="text-center mb-4 position-relative">
+            <label for="profile_image_input" class="cursor-pointer d-inline-block position-relative">
+                {% if profile.profile_image %}
+                    <img id="profile_preview" src="{{ url_for('static', filename='uploads/' ~ profile.profile_image) }}" 
+                         class="rounded-circle border" width="120" height="120">
+                {% else %}
+                    <img id="profile_preview" src="{{ url_for('static', filename='images/default-user.png') }}" 
+                         class="rounded-circle border" width="120" height="120">
+                {% endif %}
+                <div class="position-absolute bottom-0 end-0 bg-primary rounded-circle p-2">
+                    <i class="fas fa-camera text-white"></i>
+                </div>
+            </label>
+            {{ form.profile_image(id="profile_image_input", style="display:none;") }}
+        </div>
+
+        <!-- Form Fields -->
+        <div class="mb-3">
+            {{ form.full_name.label }}
+            {{ form.full_name(class="form-control") }}
+        </div>
+
+        <div class="mb-3">
+            {{ form.email.label }}
+            {{ form.email(class="form-control") }}
+        </div>
+
+        <div class="mb-3">
+            {{ form.billing_address.label }}
+            {{ form.billing_address(class="form-control") }}
+        </div>
+
+        <div class="mb-3">
+            {{ form.payment_method.label }}
+            {{ form.payment_method(class="form-select") }}
+        </div>
+
+        <div class="text-center">
+            {{ form.submit(class="btn btn-primary") }}
+        </div>
+    </form>
+</div>
+
+<script>
+    // Preview the uploaded profile image
+    const profileInput = document.getElementById('profile_image_input');
+    const profilePreview = document.getElementById('profile_preview');
+
+    profileInput.addEventListener('change', function() {
+        const file = this.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                profilePreview.src = e.target.result;
+            }
+            reader.readAsDataURL(file);
+        }
+    });
+</script>
+
+<style>
+    .cursor-pointer { cursor: pointer; }
+</style>
+{% endblock %}

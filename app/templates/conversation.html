@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="chat-container">
+
+    <!-- HEADER -->
+    <div class="chat-header">
+        <a href="{{ url_for('inbox') }}" class="back-btn" title="Back to inbox">
+            ←
+        </a>
+
+        <div class="title">
+            <!-- Seller's name clickable for buyers -->
+            {% if current_user.role != 'seller' %}
+                <a href="{{ url_for('seller_profile', user_id=other_user.id) }}" class="text-decoration-none fw-bold">
+                    {{ other_user.username }}
+                </a>
+            {% else %}
+                <strong>{{ other_user.username }}</strong>
+            {% endif %}
+            <br>
+            <small>{{ product.name }}</small>
+        </div>
+    </div>
+
+    <!-- MESSAGES -->
+    <div id="chat-body" class="chat-body">
+        {% set last_date = None %}
+        {% for msg in messages %}
+            {% set msg_date = msg.timestamp.date() %}
+            {% if last_date != msg_date %}
+                <div class="date-separator text-center my-2">
+                    {{ msg.timestamp.strftime('%B %d, %Y') }}
+                </div>
+                {% set last_date = msg_date %}
+            {% endif %}
+
+            <div class="message {% if msg.sender_id == current_user.id %}sent{% else %}received{% endif %}">
+                {{ msg.content }}
+                <small>{{ msg.timestamp.strftime('%H:%M') }}</small>
+            </div>
+        {% endfor %}
+    </div>
+
+    <!-- INPUT -->
+    <form method="POST" class="chat-input">
+        {{ form.hidden_tag() }}
+        {{ form.content(class_="form-control", rows=1, placeholder="Type a message…") }}
+        <button type="submit" class="btn btn-primary btn-sm">Send</button>
+    </form>
+
+</div>
+
+<script>
+    const chatBody = document.getElementById('chat-body');
+    chatBody.scrollTop = chatBody.scrollHeight;
+</script>
+
+{% endblock %}

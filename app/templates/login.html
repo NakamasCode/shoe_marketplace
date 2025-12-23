@@ -1,30 +1,80 @@
 {% extends "base.html" %}
 
+{% block title %}Login - Afrido{% endblock %}
+
 {% block content %}
-    <div class="log">
-        <h1>Sign In</h1>
-        <form action="" method="post" novalidate>
-            {{ form.hidden_tag() }}
-            <p>
-                {{ form.email.label }}<br>
-                {{ form.email(size=32) }}
-                {% for error in form.email.errors %}
-                <span style="color: red;">[{{ error }}]</span>
-                {% endfor %}
-            </p>
-             <p>
-                {{ form.password.label }}<br>
-                {{ form.password(size=32) }}
-                 {% for error in form.password.errors %}
-                <span style="color: red;">[{{ error }}]</span>
-                {% endfor %}
-            </p>
-             <p>
-                {{ form.remember() }}<br>
-                {{ form.remember.label }}
-            </p>
-            <p>{{ form.submit() }}</p>
-            <p>New User? <a href="{{ url_for('register')}}">Click to Register!</a></p>
-        </form>
+<div class="container min-vh-100 d-flex flex-column">
+
+    <!-- Top Section: App Name -->
+    <div class="text-center mt-3 mb-4">
+        <h1 class="fw-bold display-1">Afrido</h1>
+        <h2 class="h4 text-muted">Sign In</h2>
     </div>
+
+    <!-- Form Section -->
+    <div class="row justify-content-center flex-grow-1 d-flex align-items-center">
+        <div class="col-12 col-md-6 col-lg-5">
+
+            <!-- Flash Alerts (Dismissible) -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+              {% if messages %}
+                {% for category, message in messages %}
+                  {% set bs_category = 'danger' if category in ['error', 'danger'] else category %}
+                  <div class="alert alert-{{ bs_category }} alert-dismissible fade show" role="alert">
+                      {{ message }}
+                      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                  </div>
+                {% endfor %}
+              {% endif %}
+            {% endwith %}
+
+            <form action="" method="post" novalidate>
+                {{ form.hidden_tag() }}
+
+                <!-- Email -->
+                <div class="mb-3">
+                    {{ form.email.label(class="form-label") }}
+                    {{ form.email(class="form-control", placeholder="Enter your email") }}
+                    {% for error in form.email.errors %}
+                        <div class="text-danger small">[{{ error }}]</div>
+                    {% endfor %}
+                </div>
+
+                <!-- Password -->
+                <div class="mb-3">
+                    {{ form.password.label(class="form-label") }}
+                    {{ form.password(class="form-control", placeholder="Enter your password") }}
+                    {% for error in form.password.errors %}
+                        <div class="text-danger small">[{{ error }}]</div>
+                    {% endfor %}
+                </div>
+
+                <!-- Remember Me -->
+                <div class="mb-3 form-check">
+                    {{ form.remember(class="form-check-input") }}
+                    {{ form.remember.label(class="form-check-label") }}
+                </div>
+
+                <!-- Login Button -->
+                <div class="d-grid mb-2">
+                    {{ form.submit(class="btn btn-primary btn-lg") }}
+                </div>
+
+                <!-- Forgot Password -->
+                <div class="text-end mb-3">
+                    <a href="{{ url_for('forgot_password') }}" class="text-decoration-none">Forgot password?</a>
+                </div>
+
+                <hr>
+
+                <!-- Sign Up -->
+                <div class="text-center">
+                    <span class="me-2">New User?</span>
+                    <a href="{{ url_for('register') }}" class="text-decoration-none">Click to Register!</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</div>
 {% endblock %}
