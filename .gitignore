@@ -13,8 +13,10 @@ env/
 instance/
 
 # Environment variables
-.env
 .flaskenv
+.env
+*.env
+
 
 # SQLite database (if you're using one locally)
 *.db
