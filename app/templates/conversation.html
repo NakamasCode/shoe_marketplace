@@ -5,14 +5,15 @@
 
     <!-- HEADER -->
     <div class="chat-header">
-        <a href="{{ url_for('main.main.inbox') }}" class="back-btn" title="Back to inbox">
+        <!-- Back to inbox -->
+        <a href="{{ url_for('main.inbox') }}" class="back-btn" title="Back to inbox">
             ←
         </a>
 
         <div class="title">
             <!-- Seller's name clickable for buyers -->
             {% if current_user.role != 'seller' %}
-                <a href="{{ url_for('main.main.seller_profile', user_id=other_user.id) }}" class="text-decoration-none fw-bold">
+                <a href="{{ url_for('main.seller_profile', user_id=other_user.id) }}" class="text-decoration-none fw-bold">
                     {{ other_user.username }}
                 </a>
             {% else %}
@@ -42,7 +43,7 @@
         {% endfor %}
     </div>
 
-    <!-- INPUT -->
+    <!-- INPUT FORM -->
     <form method="POST" class="chat-input">
         {{ form.hidden_tag() }}
         {{ form.content(class_="form-control", rows=1, placeholder="Type a message…") }}
@@ -51,6 +52,7 @@
 
 </div>
 
+<!-- Auto-scroll to latest message -->
 <script>
     const chatBody = document.getElementById('chat-body');
     chatBody.scrollTop = chatBody.scrollHeight;

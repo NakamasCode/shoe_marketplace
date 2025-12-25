@@ -1,8 +1,6 @@
 {% extends "base.html" %}
 
 {% block content %}
-
-
 <div class="container my-5">
 
     <!-- Back button -->
@@ -12,81 +10,88 @@
         </a>
     </div>
 
-    <!-- Catchy Heading -->
     <h2 class="text-center fw-bold mb-4">
         Check out {{ products|length }} awesome product{{ products|length != 1 and 's' or '' }}
         from {{ seller.username }}!
     </h2>
 
     <div class="row justify-content-center g-3">
-
         {% for product in products %}
             {% set images = product.images.all() if product.images.__class__.__name__ == 'AppenderQuery' else product.images %}
 
             <div class="col-12 col-sm-6 col-md-4 col-lg-3">
-                <div class="card product-card h-100"
-                     onclick="location.href='{{ url_for('main.product_detail', product_id=product.id) }}'">
+                <div class="card product-card h-100">
 
-                    {% if images|length > 0 %}
-                        <img src="{{ url_for('static', filename='uploads/' ~ images[0].image_url) }}"
-                             class="card-img-top"
-                             style="height:180px; object-fit:cover;">
-                    {% else %}
-                        <div class="d-flex align-items-center justify-content-center bg-light"
-                             style="height:180px;">
-                            No Image
+                    <!-- Whole card clickable -->
+                    <a href="{{ url_for('main.product_detail', product_id=product.id) }}" class="card-link">
+                        {% if images|length > 0 %}
+                            <img src="{{ images[0].image_url }}"
+                                class="card-img-top"
+                                style="height:180px; object-fit:cover;">
+                        {% else %}
+                            <div class="d-flex align-items-center justify-content-center bg-light"
+                                style="height:180px;">
+                                No Image
+                            </div>
+                        {% endif %}
+
+                        <div class="card-body text-center position-relative">
+
+                            <!-- Default text -->
+                            <div class="card-text-default">
+                                <h6 class="card-title mb-2">{{ product.name }}</h6>
+                                <p class="mb-1 fw-semibold">₦{{ "{:,.2f}".format(product.price) }}</p>
+                                <small class="text-muted">Stock: {{ product.stock_quantity }}</small>
+                            </div>
+
+                            <!-- Hover add-to-cart button -->
+                            <div class="card-text-hover">
+                                <button class="btn btn-primary w-100" onclick="event.stopPropagation(); alert('Coming soon!');">
+                                    Add to cart
+                                </button>
+                            </div>
+
                         </div>
-                    {% endif %}
-
-                    <div class="card-body text-center">
-
-                        <h6 class="card-title mb-2">{{ product.name }}</h6>
-
-                        <!-- DEFAULT TEXT -->
-                        <div class="card-text-default">
-                            <p class="mb-1 fw-semibold">
-                                ₦{{ "{:,.2f}".format(product.price) }}
-                            </p>
-                            <small class="text-muted">
-                                Stock: {{ product.stock_quantity }}
-                            </small>
-                        </div>
-
-                        <!-- HOVER ACTION -->
-                        <div class="card-text-hover">
-                            <button class="btn btn-primary w-100"
-                                    onclick="event.stopPropagation();">
-                                Add to cart
-                            </button>
-                        </div>
-
-                    </div>
+                    </a>
                 </div>
             </div>
-
         {% else %}
             <p class="text-center">No products from this seller yet.</p>
         {% endfor %}
-
     </div>
 </div>
 
 <style>
-/* hide hover action by default */
-.card-text-hover {
-    display: none;
+ .card-body {
+    position: relative;
+    min-height: 80px; /* reserve space so hover swap doesn't resize card */
 }
 
-/* swap ONLY the text area */
+/* Default text visible */
+.card-text-default {
+    transition: opacity 0.2s ease;
+}
+
+/* Add-to-cart button hidden by default */
+.card-text-hover {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+/* On hover: hide text, show button */
 .product-card:hover .card-text-default {
-    display: none;
+    opacity: 0;
 }
 
 .product-card:hover .card-text-hover {
-    display: block;
+    opacity: 1;
 }
 
-/* subtle polish */
+/* Subtle card lift */
 .product-card {
     cursor: pointer;
     transition: transform 0.15s ease;
@@ -95,5 +100,14 @@
 .product-card:hover {
     transform: translateY(-2px);
 }
+
+/* Make sure the <a> fills the card */
+.card-link {
+    display: block;
+    color: inherit;
+    text-decoration: none;
+}
+
+
 </style>
 {% endblock %}

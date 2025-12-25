@@ -2,22 +2,34 @@
 
 {% block content %}
 
-<div style="max-width: 600px; margin: 30px auto;">
+<div class="container my-5" style="max-width: 600px;">
 
-    <h2>Message Seller about "{{ product.name }}"</h2>
+    <!-- Heading -->
+    <div class="text-center mb-4">
+        <h2 class="fw-bold">Message Seller</h2>
+        <p class="text-muted">
+            About: <strong>{{ product.name }}</strong><br>
+            To: <strong>{{ seller.username }}</strong>
+        </p>
+    </div>
 
-    <p>Sending message to: <strong>{{ seller.username }}</strong></p>
-
+    <!-- Message Form -->
     <form method="POST" action="">
         {{ form.hidden_tag() }}
 
-        <div style="margin-bottom: 15px;">
-            {{ form.content.label }}
-            {{ form.content(class="form-control", placeholder="Type your message here...") }}
+        <div class="mb-3">
+            {{ form.content.label(class="form-label") }}
+            {{ form.content(class="form-control", placeholder="Type your message here...", rows="5") }}
         </div>
 
-        <button type="submit" class="btn btn-success">Send Message</button>
-        <a href="{{ url_for('main.product_detail', product_id=product.id) }}" class="btn btn-secondary">Cancel</a>
+        <div class="d-flex justify-content-center gap-2">
+            <button type="submit" class="btn btn-success px-4">
+                <i class="fas fa-paper-plane me-1"></i> Send Message
+            </button>
+            <a href="{{ url_for('main.product_detail', product_id=product.id) }}" class="btn btn-secondary px-4">
+                Cancel
+            </a>
+        </div>
     </form>
 
 </div>

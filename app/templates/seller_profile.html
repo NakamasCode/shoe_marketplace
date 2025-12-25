@@ -1,8 +1,8 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="container my-4" style="max-width: 600px;">
+<div class="container my-5" style="max-width: 650px;">
 
-    <!-- Back/Home Icon -->
+    <!-- Back/Home -->
     <div class="mb-3">
         <a href="{{ url_for('main.seller_dashboard') if editable else url_for('main.index') }}" 
            class="text-decoration-none text-dark">
@@ -16,12 +16,11 @@
     <form method="POST" enctype="multipart/form-data">
         {{ form.hidden_tag() }}
 
-        <!-- Shop Logo as Clickable Profile Icon -->
+        <!-- Shop Logo -->
         <div class="text-center mb-4 position-relative">
             <label for="shop_logo_input" class="cursor-pointer d-inline-block position-relative">
                 {% if profile.shop_logo %}
-                    <img src="{{ url_for('static', filename='uploads/' ~ profile.shop_logo) }}" 
-                         class="rounded-circle border" width="120" height="120">
+                    <img src="{{ profile.shop_logo }}" class="rounded-circle border" width="120" height="120">
                 {% else %}
                     <i class="fas fa-circle-user fa-6x text-secondary"></i>
                 {% endif %}
@@ -32,65 +31,44 @@
             <input type="file" id="shop_logo_input" name="shop_logo" style="display:none;">
         </div>
 
-        <!-- Shop Details -->
-        <div class="mb-3">
-            <label>{{ form.shop_name.label }}</label>
-            {{ form.shop_name(class="form-control") }}
-        </div>
-
-        <div class="mb-3">
-            <label>{{ form.about.label }}</label>
-            {{ form.about(class="form-control", rows="3") }}
-        </div>
-
-        <div class="mb-3">
-            <label>{{ form.phone_number.label }}</label>
-            {{ form.phone_number(class="form-control") }}
-            {% for error in form.phone_number.errors %}
-                <div class="text-danger">{{ error }}</div>
-            {% endfor %}
-        </div>
-
-        <div class="mb-3">
-            <label>{{ form.location.label }}</label>
-            {{ form.location(class="form-control") }}
-        </div>
-
-        <div class="mb-3">
-            <label>{{ form.open_hours.label }}</label>
-            {{ form.open_hours(class="form-control") }}
-        </div>
+        <!-- Shop Info -->
+        <div class="mb-3">{{ form.shop_name.label(class="form-label") }}{{ form.shop_name(class="form-control") }}</div>
+        <div class="mb-3">{{ form.about.label(class="form-label") }}{{ form.about(class="form-control", rows="3") }}</div>
+        <div class="mb-3">{{ form.phone_number.label(class="form-label") }}{{ form.phone_number(class="form-control") }}</div>
+        <div class="mb-3">{{ form.location.label(class="form-label") }}{{ form.location(class="form-control") }}</div>
+        <div class="mb-3">{{ form.open_hours.label(class="form-label") }}{{ form.open_hours(class="form-control") }}</div>
 
         <!-- Shop Gallery -->
         <h4 class="mt-4 mb-3 text-center">Shop Gallery</h4>
-        <div class="d-flex gap-3 flex-wrap justify-content-center mb-3">
-            {% for field in gallery_fields %}
-                {% set idx = loop.index0 %}
-                <label for="{{ field.id }}" class="gallery-slot cursor-pointer text-center">
+        <div class="d-flex flex-wrap gap-3 justify-content-center mb-3">
+            {% for i in range(4) %}
+                <label class="gallery-slot cursor-pointer text-center position-relative">
                     <div class="border rounded d-flex align-items-center justify-content-center"
-                        style="width:120px; height:120px; overflow:hidden;">
-                        {% if gallery_images and gallery_images[idx] %}
-                            <img src="{{ url_for('static', filename='uploads/' ~ gallery_images[idx].image_url) }}"
-                                style="width:100%; height:100%; object-fit:cover;">
+                         style="width:120px; height:120px; overflow:hidden;">
+                        {% if gallery_images[i] %}
+                            <img src="{{ gallery_images[i].image_url }}" style="width:100%; height:100%; object-fit:cover;">
                         {% else %}
                             <i class="fas fa-image fa-3x text-secondary"></i>
                         {% endif %}
                     </div>
-                    {{ field(id=field.id, style="display:none;") }}
+                    <input type="file" name="gallery_{{ i }}" style="display:none;">
+                    <div class="position-absolute bottom-0 end-0 bg-primary rounded-circle p-2">
+                        <i class="fas fa-camera text-white"></i>
+                    </div>
                 </label>
             {% endfor %}
         </div>
 
         <div class="text-center">
-            {{ form.submit(class="btn btn-primary") }}
+            {{ form.submit(class="btn btn-primary px-4") }}
         </div>
     </form>
+
     {% else %}
     <!-- Read-only view for buyers -->
     <div class="text-center mb-4">
         {% if profile.shop_logo %}
-            <img src="{{ url_for('static', filename='uploads/' ~ profile.shop_logo) }}" 
-                 class="rounded-circle border" width="120" height="120">
+            <img src="{{ profile.shop_logo }}" class="rounded-circle border" width="120" height="120">
         {% else %}
             <i class="fas fa-circle-user fa-6x text-secondary"></i>
         {% endif %}
@@ -103,15 +81,16 @@
     <div class="mb-3"><strong>Open Hours:</strong> {{ profile.open_hours }}</div>
 
     <h4 class="mt-4 mb-3 text-center">Shop Gallery</h4>
-    <div class="d-flex gap-3 flex-wrap justify-content-center mb-3">
+    <div class="d-flex flex-wrap gap-3 justify-content-center mb-3">
         {% for img in gallery_images %}
+            {% if img %}
             <div class="border rounded d-flex align-items-center justify-content-center"
                  style="width:120px; height:120px; overflow:hidden;">
-                <img src="{{ url_for('static', filename='uploads/' ~ img.image_url) }}"
-                     style="width:100%; height:100%; object-fit:cover;">
+                <img src="{{ img.image_url }}" style="width:100%; height:100%; object-fit:cover;">
             </div>
+            {% endif %}
         {% endfor %}
-        {% if not gallery_images %}
+        {% if not gallery_images or gallery_images|length == 0 %}
             <div class="text-muted">No images yet.</div>
         {% endif %}
     </div>
@@ -119,10 +98,13 @@
 </div>
 
 <style>
-    .cursor-pointer { cursor: pointer; }
-
-    @media (max-width: 576px) {
-        .gallery-slot { margin: 0 auto 15px auto; }
-    }
+.cursor-pointer { cursor: pointer; }
+.gallery-slot:hover {
+    transform: scale(1.05);
+    transition: transform 0.2s;
+}
+@media (max-width: 576px) {
+    .gallery-slot { margin: 0 auto 15px auto; }
+}
 </style>
 {% endblock %}

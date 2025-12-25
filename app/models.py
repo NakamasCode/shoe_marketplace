@@ -58,7 +58,10 @@ class BuyerProfile(db.Model):
     email = db.Column(db.String(120))
     billing_address = db.Column(db.String(250))
     payment_method = db.Column(db.String(50))
-    profile_image = db.Column(db.String(200))
+
+    # Image fields
+    profile_image = db.Column(db.String(200))  # full URL (fallback / legacy)
+    profile_image_public_id = db.Column(db.String(200))  # Cloudinary public_id
 
     def __repr__(self):
         return f'<BuyerProfile {self.full_name or self.user.username}>'
@@ -71,7 +74,9 @@ class SellerProfile(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), unique=True)
 
     shop_name = db.Column(db.String(140))
-    shop_logo = db.Column(db.String(200))
+    shop_logo = db.Column(db.String(300))
+    shop_logo_public_id = db.Column(db.String(200))
+
     about = db.Column(db.Text)
     phone_number = db.Column(db.String(20))
     location = db.Column(db.String(200))
@@ -90,6 +95,7 @@ class SellerImage(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     seller_profile_id = db.Column(db.Integer, db.ForeignKey('seller_profile.id'))
     image_url = db.Column(db.String(200))
+    public_id = db.Column(db.String(200))   # Cloudinary public_id
     description = db.Column(db.String(200))
 
 # ----------------------
@@ -138,6 +144,7 @@ class Product(db.Model):
 class ProductImage(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     product_id = db.Column(db.Integer, db.ForeignKey('product.id'))
+    public_id = db.Column(db.String(200))   # Cloudinary public_id
     image_url = db.Column(db.String(200))
     description = db.Column(db.String(200))
 
@@ -150,7 +157,7 @@ class Message(db.Model):
     sender_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     receiver_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=True)
-    
+    is_read = db.Column(db.Boolean, default=False) 
     content = db.Column(db.Text, nullable=False)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 

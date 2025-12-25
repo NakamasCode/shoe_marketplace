@@ -4,9 +4,7 @@
 
     <!-- Back button -->
     <div class="mb-3">
-        <a href="{{ url_for('main.index') }}" class="btn btn-outline-secondary btn-sm">
-            ← Back
-        </a>
+        <a href="{{ url_for('main.index') }}" class="btn btn-outline-secondary btn-sm">← Back</a>
     </div>
 
     <h2 class="text-center mb-4">Buyer Profile</h2>
@@ -18,7 +16,7 @@
         <div class="text-center mb-4 position-relative">
             <label for="profile_image_input" class="cursor-pointer d-inline-block position-relative">
                 {% if profile.profile_image %}
-                    <img id="profile_preview" src="{{ url_for('static', filename='uploads/' ~ profile.profile_image) }}" 
+                    <img id="profile_preview" src="{{ profile.profile_image }}" 
                          class="rounded-circle border" width="120" height="120">
                 {% else %}
                     <img id="profile_preview" src="{{ url_for('static', filename='images/default-user.png') }}" 
@@ -57,23 +55,6 @@
         </div>
     </form>
 </div>
-
-<script>
-    // Preview the uploaded profile image
-    const profileInput = document.getElementById('profile_image_input');
-    const profilePreview = document.getElementById('profile_preview');
-
-    profileInput.addEventListener('change', function() {
-        const file = this.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                profilePreview.src = e.target.result;
-            }
-            reader.readAsDataURL(file);
-        }
-    });
-</script>
 
 <style>
     .cursor-pointer { cursor: pointer; }

@@ -22,7 +22,8 @@
                     <!-- Seller Logo (Centered) -->
                     <div class="d-flex justify-content-center mb-3">
                         {% if profile and profile.shop_logo %}
-                            <img src="{{ url_for('static', filename='uploads/' ~ profile.shop_logo) }}"
+                            <!-- Cloudinary-ready logo -->
+                            <img src="{{ profile.shop_logo }}"
                                  class="rounded-circle"
                                  style="width: 120px; height: 120px; object-fit: cover;">
                         {% else %}

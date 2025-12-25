@@ -4,9 +4,7 @@
 
     <!-- Header -->
     <div class="mb-3">
-        <a href="{{ url_for('main.index') }}" class="btn btn-outline-secondary btn-sm">
-        ← Back
-        </a>
+        <a href="{{ url_for('main.index') }}" class="btn btn-outline-secondary btn-sm">← Back</a>
     </div>
 
     <div class="d-flex align-items-center mb-4">
@@ -52,7 +50,7 @@
             {{ form.stock_quantity(class="form-control") }}
         </div>
 
-        <!-- Product Images -->
+        <!-- Product Images Upload -->
         <h4 class="mt-4 mb-3 text-center">Product Images</h4>
         <div class="d-flex gap-3 flex-wrap justify-content-center mb-3">
             {% for field in [form.product_image1, form.product_image2, form.product_image3, form.product_image4] %}
@@ -65,6 +63,18 @@
                 </label>
             {% endfor %}
         </div>
+
+        <!-- Existing Cloudinary Images -->
+        {% if product and product.images|length > 0 %}
+        <h5 class="text-center">Uploaded Images</h5>
+        <div class="d-flex gap-3 flex-wrap justify-content-center mb-3">
+            {% for img in product.images %}
+                <div class="border rounded" style="width:120px; height:120px; overflow:hidden;">
+                    <img src="{{ img.image_url }}" class="img-fluid" style="width:100%; height:100%; object-fit:cover;">
+                </div>
+            {% endfor %}
+        </div>
+        {% endif %}
 
         <!-- Submit -->
         <div class="text-center">
