@@ -13,7 +13,7 @@ env/
 instance/
 
 # Environment variables
-.flaskenv
+*.flaskenv
 .env
 *.env
 
